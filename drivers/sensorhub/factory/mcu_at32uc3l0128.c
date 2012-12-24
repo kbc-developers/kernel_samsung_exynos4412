@@ -25,7 +25,7 @@ ssize_t mcu_revision_show(struct device *dev,
 {
 	struct ssp_data *data = dev_get_drvdata(dev);
 
-	return sprintf(buf, "AT0112%u,AT0112%u\n", get_module_rev(),
+	return sprintf(buf, "AT01120%u,AT01120%u\n", get_module_rev(),
 		data->uCurFirmRev);
 }
 
@@ -44,10 +44,8 @@ ssize_t mcu_update_show(struct device *dev,
 
 	ssp_dbg("[SSP]: %s - mcu binany update!\n", __func__);
 
-	if (data->bBinaryChashed == false) {
-		disable_irq(data->iIrq);
-		disable_irq_wake(data->iIrq);
-	}
+	disable_irq(data->iIrq);
+	disable_irq_wake(data->iIrq);
 
 	iRet = update_mcu_bin(data);
 	if (iRet < 0) {
@@ -84,10 +82,8 @@ ssize_t mcu_update2_show(struct device *dev,
 
 	ssp_dbg("[SSP]: %s - mcu binany update!\n", __func__);
 
-	if (data->bBinaryChashed == false) {
-		disable_irq(data->iIrq);
-		disable_irq_wake(data->iIrq);
-	}
+	disable_irq(data->iIrq);
+	disable_irq_wake(data->iIrq);
 
 	iRet = update_crashed_mcu_bin(data);
 	if (iRet < 0) {
@@ -101,14 +97,11 @@ ssize_t mcu_update2_show(struct device *dev,
 		goto exit;
 	}
 
-	sync_sensor_state(data);
-
 	enable_irq(data->iIrq);
 	enable_irq_wake(data->iIrq);
 
-#ifdef CONFIG_SENSORS_SSP_SENSORHUB
-	ssp_report_sensorhub_notice(data, MSG2SSP_AP_STATUS_RESET);
-#endif
+	if (atomic_read(&data->aSensorEnable) > 0)
+		sync_sensor_state(data);
 
 	bSuccess = true;
 exit:
@@ -159,10 +152,8 @@ ssize_t mcu_factorytest_show(struct device *dev,
 	bool bMcuTestSuccessed = false;
 	struct ssp_data *data = dev_get_drvdata(dev);
 
-	if (data->bBinaryChashed == true) {
-		ssp_dbg("[SSP]: %s - MCU Bin is crashed\n", __func__);
-		return sprintf(buf, "NG,NG,NG\n");
-	}
+	if (data->bBinaryChashed == true)
+		sprintf(buf, "NG,NG,NG\n");
 
 	if (data->uFactorydataReady & (1 << MCU_FACTORY)) {
 		ssp_dbg("[SSP] MCU Factory Test Data : %u, %u, %u, %u, %u\n",
@@ -178,10 +169,8 @@ ssize_t mcu_factorytest_show(struct device *dev,
 			&& (data->uFactorydata[4] == SUCCESS))
 			bMcuTestSuccessed = true;
 	} else {
-		pr_err("[SSP]: %s - The Sensorhub is not ready %u\n", __func__,
-			data->uFactorydataReady);
+		pr_err("[SSP]: %s - The Sensorhub is not ready\n", __func__);
 	}
-
 	ssp_dbg("[SSP]: MCU Factory Test Result - %s, %s, %s\n", MODEL_NAME,
 		(data->bMcuIRQTestSuccessed ? "OK" : "NG"),
 		(bMcuTestSuccessed ? "OK" : "NG"));

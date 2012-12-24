@@ -65,9 +65,6 @@ static void change_sensor_delay(struct ssp_data *data,
 		data->aiCheckStatus[iSensorType] = RUNNING_SENSOR_STATE;
 
 		if (iSensorType == PROXIMITY_SENSOR) {
-			proximity_open_lcd_ldi(data);
-			proximity_open_calibration(data);
-
 			input_report_abs(data->prox_input_dev, ABS_DISTANCE, 1);
 			input_sync(data->prox_input_dev);
 		}
@@ -170,7 +167,7 @@ static ssize_t show_sensors_enable(struct device *dev,
 	ssp_dbg("[SSP]: %s - cur_enable = %d\n", __func__,
 		 atomic_read(&data->aSensorEnable));
 
-	return sprintf(buf, "%9u\n", atomic_read(&data->aSensorEnable));
+	return sprintf(buf, "%10u", atomic_read(&data->aSensorEnable));
 }
 
 static ssize_t set_sensors_enable(struct device *dev,
@@ -413,12 +410,9 @@ static struct device_attribute *mcu_attrs[] = {
 
 static void initialize_mcu_factorytest(struct ssp_data *data)
 {
-	sensors_register(data->mcu_device, data, mcu_attrs, "ssp_sensor");
-}
+	struct device *mcu_device = NULL;
 
-static void remove_mcu_factorytest(struct ssp_data *data)
-{
-	sensors_unregister(data->mcu_device, mcu_attrs);
+	sensors_register(mcu_device, data, mcu_attrs, "ssp_sensor");
 }
 
 int initialize_sysfs(struct ssp_data *data)
@@ -481,13 +475,4 @@ void remove_sysfs(struct ssp_data *data)
 		&dev_attr_light_poll_delay);
 	device_remove_file(&data->prox_input_dev->dev,
 		&dev_attr_prox_poll_delay);
-
-	remove_accel_factorytest(data);
-	remove_gyro_factorytest(data);
-	remove_prox_factorytest(data);
-	remove_light_factorytest(data);
-	remove_pressure_factorytest(data);
-	remove_magnetic_factorytest(data);
-	remove_mcu_factorytest(data);
-	destroy_sensor_class();
 }

@@ -82,12 +82,11 @@ struct lcd_info {
 	unsigned char			b3[GAMMA_MAX][ARRAY_SIZE(SEQ_LTPS_AID)];
 #endif
 	unsigned int			irq;
-	unsigned int			gpio;
 	unsigned int			connected;
 
-#if defined(GPIO_ERR_FG)
-	struct delayed_work		err_fg_detection;
-	unsigned int			err_fg_detection_count;
+#if defined(GPIO_OLED_DET)
+	struct delayed_work		oled_detection;
+	unsigned int			oled_detection_count;
 #endif
 
 	struct dsim_global		*dsim;
@@ -115,20 +114,20 @@ static unsigned int aid_candela_table[GAMMA_MAX] = {
 extern void (*lcd_early_suspend)(void);
 extern void (*lcd_late_resume)(void);
 
-#if defined(GPIO_ERR_FG)
-static void err_fg_detection_work(struct work_struct *work)
+#if defined(GPIO_OLED_DET)
+static void oled_detection_work(struct work_struct *work)
 {
 	struct lcd_info *lcd =
-		container_of(work, struct lcd_info, err_fg_detection.work);
+		container_of(work, struct lcd_info, oled_detection.work);
 
-	int oled_det_level = gpio_get_value(lcd->gpio);
+	int oled_det_level = gpio_get_value(GPIO_OLED_DET);
 
-	dev_info(&lcd->ld->dev, "%s, %d, %d\n", __func__, lcd->err_fg_detection_count, oled_det_level);
+	dev_info(&lcd->ld->dev, "%s, %d, %d\n", __func__, lcd->oled_detection_count, oled_det_level);
 
 	if (!oled_det_level) {
-		if (lcd->err_fg_detection_count < 10) {
-			schedule_delayed_work(&lcd->err_fg_detection, HZ/8);
-			lcd->err_fg_detection_count++;
+		if (lcd->oled_detection_count < 10) {
+			schedule_delayed_work(&lcd->oled_detection, HZ/8);
+			lcd->oled_detection_count++;
 			set_dsim_hs_clk_toggle_count(15);
 		} else
 			set_dsim_hs_clk_toggle_count(0);
@@ -137,14 +136,14 @@ static void err_fg_detection_work(struct work_struct *work)
 
 }
 
-static irqreturn_t err_fg_detection_int(int irq, void *_lcd)
+static irqreturn_t oled_detection_int(int irq, void *_lcd)
 {
 	struct lcd_info *lcd = _lcd;
 
 	dev_info(&lcd->ld->dev, "%s\n", __func__);
 
-	lcd->err_fg_detection_count = 0;
-	schedule_delayed_work(&lcd->err_fg_detection, HZ/16);
+	lcd->oled_detection_count = 0;
+	schedule_delayed_work(&lcd->oled_detection, HZ/16);
 
 	return IRQ_HANDLED;
 }
@@ -391,7 +390,7 @@ static int ea8061_set_acl(struct lcd_info *lcd, u8 force)
 		break;
 	}
 
-	if (!lcd->acl_enable)
+	if ((!lcd->acl_enable) || (lcd->auto_brightness >= 5))
 		level = ACL_STATUS_0P;
 
 	if (force || lcd->current_acl != ACL_CUTOFF_TABLE[level][1]) {
@@ -1044,13 +1043,13 @@ void ea8061_early_suspend(void)
 
 	dev_info(&lcd->ld->dev, "+%s\n", __func__);
 
-#if defined(GPIO_ERR_FG)
+#if defined(GPIO_OLED_DET)
 	disable_irq(lcd->irq);
-	gpio_request(lcd->gpio, "ERR_FG");
-	s3c_gpio_cfgpin(lcd->gpio, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(lcd->gpio, S3C_GPIO_PULL_NONE);
-	gpio_direction_output(lcd->gpio, GPIO_LEVEL_LOW);
-	gpio_free(lcd->gpio);
+	gpio_request(GPIO_OLED_DET, "OLED_DET");
+	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
+	gpio_direction_output(GPIO_OLED_DET, GPIO_LEVEL_LOW);
+	gpio_free(GPIO_OLED_DET);
 #endif
 
 	ea8061_power(lcd, FB_BLANK_POWERDOWN);
@@ -1066,9 +1065,9 @@ void ea8061_late_resume(void)
 	dev_info(&lcd->ld->dev, "+%s\n", __func__);
 	ea8061_power(lcd, FB_BLANK_UNBLANK);
 
-#if defined(GPIO_ERR_FG)
-	s3c_gpio_cfgpin(lcd->gpio, S3C_GPIO_SFN(0xf));
-	s3c_gpio_setpull(lcd->gpio, S3C_GPIO_PULL_NONE);
+#if defined(GPIO_OLED_DET)
+	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_SFN(0xf));
+	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 	enable_irq(lcd->irq);
 #endif
 
@@ -1211,19 +1210,17 @@ static int ea8061_probe(struct device *dev)
 	update_brightness(lcd, 1);
 #endif
 
-#if defined(GPIO_ERR_FG)
+#if defined(GPIO_OLED_DET)
 	if (lcd->connected) {
-		INIT_DELAYED_WORK(&lcd->err_fg_detection, err_fg_detection_work);
+		INIT_DELAYED_WORK(&lcd->oled_detection, oled_detection_work);
 
-		/* lcd->gpio = GPIO_OLED_DET; */
-		lcd->gpio = GPIO_ERR_FG;
-		lcd->irq = gpio_to_irq(lcd->gpio);
+		lcd->irq = gpio_to_irq(GPIO_OLED_DET);
 
-		s3c_gpio_cfgpin(lcd->gpio, S3C_GPIO_SFN(0xf));
-		s3c_gpio_setpull(lcd->gpio, S3C_GPIO_PULL_NONE);
+		s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_SFN(0xf));
+		s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 
-		if (request_irq(lcd->irq, err_fg_detection_int,
-			IRQF_TRIGGER_FALLING, "err_fg_detection", lcd))
+		if (request_irq(lcd->irq, oled_detection_int,
+			IRQF_TRIGGER_FALLING, "oled_detection", lcd))
 			pr_err("failed to reqeust irq. %d\n", lcd->irq);
 	}
 #endif

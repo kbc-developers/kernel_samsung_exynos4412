@@ -163,8 +163,6 @@
 #define SW_REG_CURR_MIN_MA	100
 #define SW_REG_START_DELAY	500
 #define SW_REG_STEP_DELAY	50
-#define RECOVERY_DELAY		3000
-#define RECOVERY_CNT		3
 
 struct max77693_charger_data {
 	struct max77693_dev	*max77693;
@@ -173,7 +171,6 @@ struct max77693_charger_data {
 
 	struct delayed_work	update_work;
 	struct delayed_work	softreg_work;
-	struct delayed_work	recovery_work;	/* softreg recovery work */
 
 	/* mutex */
 	struct mutex irq_lock;
@@ -204,7 +201,6 @@ struct max77693_charger_data {
 	bool		soft_reg_state;
 	int		soft_reg_current;
 	bool		soft_reg_ing;
-	int		soft_reg_recovery_cnt;
 
 	/* unsufficient power */
 	bool		reg_loop_deted;
@@ -409,15 +405,10 @@ static void max77693_set_charger_state(struct max77693_charger_data *chg_data,
 
 	max77693_read_reg(i2c, MAX77693_CHG_REG_CHG_CNFG_00, &reg_data);
 
-	if (enable) {
+	if (enable)
 		reg_data |= MAX77693_MODE_CHGR;
-	} else {
+	else
 		reg_data &= ~MAX77693_MODE_CHGR;
-
-		/* clear soft regulation count */
-		pr_info("%s: reset recovery cnt\n", __func__);
-		chg_data->soft_reg_recovery_cnt = 0;
-	}
 
 	pr_debug("%s: CHG_CNFG_00(0x%02x)\n", __func__, reg_data);
 	max77693_write_reg(i2c, MAX77693_CHG_REG_CHG_CNFG_00, reg_data);
@@ -688,7 +679,9 @@ static int max77693_get_cable_type(struct max77693_charger_data *chg_data)
 	u8 dtls_00, chgin_dtls;
 	u8 dtls_01, chg_dtls;
 	u8 mu_st2, chgdetrun, vbvolt, chgtyp, dxovp;
+#ifdef CONFIG_BATTERY_WPC_CHARGER
 	bool wc_state;
+#endif
 	bool retry_det, chg_det_erred;
 	bool otg_detected = false;
 	int retry_cnt = 0;
@@ -980,7 +973,7 @@ static int max77693_get_online_type(struct max77693_charger_data *chg_data)
 {
 	int m_typ;
 	int state = 0;
-	pr_debug("%s\n", __func__);
+	pr_info("%s\n", __func__);
 
 	m_typ = max77693_get_cable_type(chg_data);
 
@@ -988,7 +981,7 @@ static int max77693_get_online_type(struct max77693_charger_data *chg_data)
 		(chg_data->cable_sub_type << ONLINE_TYPE_SUB_SHIFT) |
 		(chg_data->cable_pwr_type << ONLINE_TYPE_PWR_SHIFT));
 
-	pr_debug("%s: online(0x%08x)\n", __func__, state);
+	pr_info("%s: online(0x%08x)\n", __func__, state);
 
 	return state;
 }
@@ -1337,84 +1330,12 @@ static void max77693_softreg_work(struct work_struct *work)
 						"for margin\n", __func__);
 			max77693_reduce_input(chg_data, SW_REG_CURR_STEP_MA);
 			chg_data->soft_reg_ing = false;
-
-			/* schedule softreg recovery wq */
-			cancel_delayed_work(&chg_data->recovery_work);
-			schedule_delayed_work(&chg_data->recovery_work,
-					msecs_to_jiffies(RECOVERY_DELAY));
 		}
 
 		wake_unlock(&chg_data->softreg_wake_lock);
 	}
 
 	mutex_unlock(&chg_data->ops_lock);
-}
-
-
-/* in soft regulation, current recovery operation */
-static void max77693_recovery_work(struct work_struct *work)
-{
-	struct max77693_charger_data *chg_data = container_of(work,
-						struct max77693_charger_data,
-						recovery_work.work);
-	struct power_supply *battery_psy = power_supply_get_by_name("battery");
-	union power_supply_propval value;
-	u8 dtls_00, chgin_dtls;
-	u8 dtls_01, chg_dtls;
-	u8 dtls_02, byp_dtls;
-	pr_debug("%s\n", __func__);
-
-	max77693_read_reg(chg_data->max77693->i2c,
-				MAX77693_CHG_REG_CHG_DTLS_00, &dtls_00);
-	max77693_read_reg(chg_data->max77693->i2c,
-				MAX77693_CHG_REG_CHG_DTLS_01, &dtls_01);
-	max77693_read_reg(chg_data->max77693->i2c,
-				MAX77693_CHG_REG_CHG_DTLS_02, &dtls_02);
-
-	chgin_dtls = ((dtls_00 & MAX77693_CHGIN_DTLS) >>
-				MAX77693_CHGIN_DTLS_SHIFT);
-	chg_dtls = ((dtls_01 & MAX77693_CHG_DTLS) >>
-				MAX77693_CHG_DTLS_SHIFT);
-	byp_dtls = ((dtls_02 & MAX77693_BYP_DTLS) >>
-				MAX77693_BYP_DTLS_SHIFT);
-
-	if ((chg_data->soft_reg_recovery_cnt < RECOVERY_CNT) && (
-		(chgin_dtls == 0x3) && (chg_dtls != 0x8) && (byp_dtls == 0x0) &&
-		(chg_data->soft_reg_state) && (!chg_data->soft_reg_ing))) {
-		pr_info("%s: try to recovery, cnt(%d)\n", __func__,
-				(chg_data->soft_reg_recovery_cnt + 1));
-
-		if (!battery_psy) {
-			pr_err("%s: fail to get battery psy\n", __func__);
-			return;
-		}
-
-		/* release softreg state */
-		chg_data->soft_reg_state = false;
-
-		battery_psy->set_property(battery_psy,
-					POWER_SUPPLY_PROP_STATUS,
-					&value);
-	} else {
-		pr_info("%s: fail to recovery, cnt(%d)\n", __func__,
-				(chg_data->soft_reg_recovery_cnt + 1));
-
-		pr_info("%s:  CHGIN(0x%x), CHG(0x%x), BYP(0x%x)\n",
-				__func__, chgin_dtls, chg_dtls, byp_dtls);
-
-		/* schedule softreg recovery wq */
-		if (chg_data->soft_reg_recovery_cnt < RECOVERY_CNT) {
-			cancel_delayed_work(&chg_data->recovery_work);
-			schedule_delayed_work(&chg_data->recovery_work,
-				msecs_to_jiffies(RECOVERY_DELAY));
-		} else {
-			pr_info("%s: recovery cnt(%d) is over\n",
-				__func__, RECOVERY_CNT);
-		}
-	}
-
-	/* add recovery try count */
-	chg_data->soft_reg_recovery_cnt++;
 }
 
 /* Support property from charger */
@@ -1876,7 +1797,6 @@ static __devinit int max77693_charger_probe(struct platform_device *pdev)
 
 	INIT_DELAYED_WORK(&chg_data->update_work, max77693_update_work);
 	INIT_DELAYED_WORK(&chg_data->softreg_work, max77693_softreg_work);
-	INIT_DELAYED_WORK(&chg_data->recovery_work, max77693_recovery_work);
 
 	chg_data->charger.name = "max77693-charger",
 	chg_data->charger.type = POWER_SUPPLY_TYPE_BATTERY,

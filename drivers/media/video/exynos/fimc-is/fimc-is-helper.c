@@ -883,9 +883,11 @@ int fimc_is_hw_wait_intsr0_intsd0(struct fimc_is_dev *dev)
 	u32 timeout;
 	u32 cfg = readl(dev->regs + INTSR0);
 	u32 status = INTSR0_GET_INTSD0(cfg);
-	timeout = 10000;
+	timeout = 50000;
 
 	while (status) {
+
+		printk(KERN_INFO "%s check status \n", __func__);
 		cfg = readl(dev->regs + INTSR0);
 		status = INTSR0_GET_INTSD0(cfg);
 		if (timeout == 0) {
@@ -904,9 +906,11 @@ int fimc_is_hw_wait_intmsr0_intmsd0(struct fimc_is_dev *dev)
 	u32 cfg = readl(dev->regs + INTMSR0);
 	u32 status = INTMSR0_GET_INTMSD0(cfg);
 
-	timeout = 10000;
+	timeout = 50000;
 
 	while (status) {
+		printk(KERN_INFO "%s check status \n", __func__);
+
 		cfg = readl(dev->regs + INTMSR0);
 		status = INTMSR0_GET_INTMSD0(cfg);
 		if (timeout == 0) {

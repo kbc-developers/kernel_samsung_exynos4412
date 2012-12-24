@@ -106,6 +106,8 @@ static void ump_vma_close(struct vm_area_struct * vma)
 
 	DBG_MSG(4, ("VMA close, VMA reference count decremented. VMA: 0x%08lx, reference count: %d\n", (unsigned long)vma, new_val));
 
+//	vma_usage_tracker->descriptor->process_mapping_info = vma;
+
 	if (0 == new_val)
 	{
 		ump_memory_allocation * descriptor;
@@ -319,11 +321,7 @@ void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk
 		end_v   = (void *)(start_v + size - 1);
 		/*  There is no dmac_clean_range, so the L1 is always flushed,
 		 *  also for UMP_MSYNC_CLEAN. */
-		if (size >= SZ_64K)
-			flush_all_cpu_caches();
-		else
-			dmac_flush_range(start_v, end_v);
-
+		dmac_flush_range(start_v, end_v);
 		DBG_MSG(3, ("UMP[%02u] Flushing CPU L1 Cache. Cpu address: %x-%x\n", mem->secure_id, start_v,end_v));
 	}
 	else
@@ -372,14 +370,6 @@ void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk
 
 
 	/* Flush L2 using physical addresses, block for block. */
-	if ((virt!=NULL) && (mem->size_bytes >= SZ_1M)) {
-		if (op == _UMP_UK_MSYNC_CLEAN)
-			outer_clean_all();
-		else if ((op == _UMP_UK_MSYNC_INVALIDATE) || (op == _UMP_UK_MSYNC_CLEAN_AND_INVALIDATE))
-			outer_flush_all();
-		return;
-	}
-
 	for (i=0 ; i < mem->nr_blocks; i++)
 	{
 		u32 start_p, end_p;

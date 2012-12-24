@@ -2063,10 +2063,8 @@ static int flite_probe(struct platform_device *pdev)
 #endif
 	mutex_init(&flite->lock);
 	flite->mdev = flite_get_capture_md(MDEV_CAPTURE);
-	if (IS_ERR_OR_NULL(flite->mdev)) {
-		ret = -ENODEV;
+	if (IS_ERR_OR_NULL(flite->mdev))
 		goto err_device_register;
-	}
 
 	flite_dbg("mdev = 0x%08x", (u32)flite->mdev);
 

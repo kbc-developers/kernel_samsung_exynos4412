@@ -27,8 +27,7 @@ void reset_mcu(struct ssp_data *data)
 
 	toggle_mcu_reset(data);
 	msleep(SSP_SW_RESET_TIME);
-	if (initialize_mcu(data) < 0)
-		data->bCheckShutdown = true;
+	initialize_mcu(data);
 
 	sync_sensor_state(data);
 
@@ -113,35 +112,23 @@ static void debug_work_func(struct work_struct *work)
 {
 	unsigned int uSensorCnt;
 	struct ssp_data *data = container_of(work, struct ssp_data, work_debug);
-        static int uTotalIrqCnt = 0;
 
-	ssp_dbg("[SSP]: %s(%u) - Sensor state: 0x%x, TO: %u, BC: %u, RC: %u\n",
-		__func__, data->uIrqCnt, data->uAliveSensorDebug, data->uTimeOutCnt,
+	ssp_dbg("[SSP]: %s - Sensor state: 0x%x, TO: %u, BC: %u, RC: %u\n",
+		__func__, data->uAliveSensorDebug, data->uTimeOutCnt,
 		data->uBusyCnt, data->uResetCnt);
-
 	for (uSensorCnt = 0; uSensorCnt < (SENSOR_MAX - 1); uSensorCnt++)
 		if (atomic_read(&data->aSensorEnable) & (1 << uSensorCnt))
 			print_sensordata(data, uSensorCnt);
-        
-        if((atomic_read(&data->aSensorEnable) & 0x4f) && (data->uIrqCnt == 0))
-		uTotalIrqCnt++;
-        else
-		uTotalIrqCnt = 0;
-        
-        data->uIrqCnt = 0;
 
-	if( (uTotalIrqCnt>1) || (data->uSsdFailCnt >= 3) || (data->uInstFailCnt >= 1)
-		|| ((data->uTimeOutCnt + data->uBusyCnt) > 5) ) {
-
+	if ((data->uSsdFailCnt >= 3) || (data->uI2cFailCnt >= 1)) {
 		if (data->uResetCnt < 20) {
 			reset_mcu(data);
 			data->uResetCnt++;
 		}
 
 		data->uSsdFailCnt = 0;
-		data->uInstFailCnt = 0;
-		uTotalIrqCnt = 0;
-	}       
+		data->uI2cFailCnt = 0;
+	}
 }
 
 static void debug_timer_func(unsigned long ptr)

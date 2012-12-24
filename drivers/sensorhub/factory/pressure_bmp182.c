@@ -144,8 +144,6 @@ static ssize_t eeprom_check_show(struct device *dev,
 		goto exit;
 	}
 
-	mdelay(5);
-
 	bSuccess = (bool)(!!data->uFactorydata[0]);
 	ssp_dbg("[SSP]: %s - %u\n", __func__, bSuccess);
 
@@ -185,11 +183,8 @@ static struct device_attribute *pressure_attrs[] = {
 
 void initialize_pressure_factorytest(struct ssp_data *data)
 {
-	sensors_register(data->prs_device, data, pressure_attrs,
-		"barometer_sensor");
-}
+	struct device *pressure_device = NULL;
 
-void remove_pressure_factorytest(struct ssp_data *data)
-{
-	sensors_unregister(data->prs_device, pressure_attrs);
+	sensors_register(pressure_device, data, pressure_attrs,
+		"barometer_sensor");
 }

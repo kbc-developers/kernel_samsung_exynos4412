@@ -1778,16 +1778,14 @@ bool dhd_is_associated(dhd_pub_t *dhd, void *bss_buf, int *retval)
 	DHD_TRACE((" %s WLC_GET_BSSID ioctl res = %d\n", __FUNCTION__, ret));
 
 	if (ret == BCME_NOTASSOCIATED) {
-		DHD_ERROR(("%s: not associated! res:%d\n", __FUNCTION__, ret));
+		DHD_TRACE(("%s: not associated! res:%d\n", __FUNCTION__, ret));
 	}
 
 	if (retval)
 		*retval = ret;
 
-	if (ret < 0) {
-		DHD_ERROR((" %s WLC_GET_BSSID ioctl res = %d\n", __FUNCTION__, ret));
+	if (ret < 0)
 		return FALSE;
-	}
 
 	if ((memcmp(bssid, zbuf, ETHER_ADDR_LEN) != 0)) {
 		/*  STA is assocoated BSSID is non zero */
@@ -1798,7 +1796,7 @@ bool dhd_is_associated(dhd_pub_t *dhd, void *bss_buf, int *retval)
 		}
 		return TRUE;
 	} else {
-		DHD_ERROR(("%s: WLC_GET_BSSID ioctl returned zero bssid\n", __FUNCTION__));
+		DHD_TRACE(("%s: WLC_GET_BSSID ioctl returned zero bssid\n", __FUNCTION__));
 		return FALSE;
 	}
 }
