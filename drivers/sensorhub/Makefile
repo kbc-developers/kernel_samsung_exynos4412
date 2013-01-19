@@ -8,14 +8,14 @@ obj-$(CONFIG_SENSORS_SSP)		+= ssp_dev.o ssp_i2c.o ssp_data.o ssp_sysfs.o\
 
 obj-$(CONFIG_SENSORS_SYSFS)		+= sensors_core.o
 
-obj-$(CONFIG_SENSORS_SSP_LSM330)	+= factory/accel_lsm330.o factory/gyro_lsm330.o
+obj-$(CONFIG_SENSORS_SSP_LSM330)	+= factory/
 
-obj-$(CONFIG_SENSORS_SSP_CM36651)	+= factory/light_cm36651.o factory/prox_cm36651.o
+obj-$(CONFIG_SENSORS_SSP_CM36651)	+= factory/
 
 obj-$(CONFIG_SENSORS_SSP_AK8963C)	+= ssp_ak8963c.o factory/magnetic_ak8963c.o
 
-obj-$(CONFIG_SENSORS_SSP_BMP182)	+= factory/pressure_bmp182.o
+obj-$(CONFIG_SENSORS_SSP_BMP182)	+= factory/
 
-obj-$(CONFIG_SENSORS_SSP_AT32UC3L0128)	+= factory/mcu_at32uc3l0128.o
+obj-$(CONFIG_SENSORS_SSP_AT32UC3L0128)	+= factory/
 
 obj-$(CONFIG_SENSORS_SSP_SENSORHUB)	+= ssp_sensorhub.o
