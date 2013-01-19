@@ -12,7 +12,7 @@ obj-$(CONFIG_SENSORS_SSP_LSM330)	+= factory/
 
 obj-$(CONFIG_SENSORS_SSP_CM36651)	+= factory/
 
-obj-$(CONFIG_SENSORS_SSP_AK8963C)	+= ssp_ak8963c.o factory/magnetic_ak8963c.o
+obj-$(CONFIG_SENSORS_SSP_AK8963C)	+= ssp_ak8963c.o factory/
 
 obj-$(CONFIG_SENSORS_SSP_BMP182)	+= factory/
 
