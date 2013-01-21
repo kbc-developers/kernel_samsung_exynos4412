@@ -4,6 +4,7 @@ KERNEL_DIR=$PWD
 export BUILD_DEVICE=$1
 
 IMAGE_NAME=boot
+#IMAGE_NAME=recovery
 
 if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
 	echo "=====> Build Device SC-03E"
@@ -139,17 +140,18 @@ echo "=====> CREATE RELEASE IMAGE"
 if [ `find $BIN_DIR -type f | wc -l` -gt 0 ]; then
   rm $BIN_DIR/*
 fi
-
 # copy zImage
 cp $OBJ_DIR/arch/arm/boot/zImage $BIN_DIR/kernel
 echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 ./release-tools/mkbootfs $INITRAMFS_TMP_DIR > $BIN_DIR/ramdisk-$IMAGE_NAME.cpio
+echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.cpio"
 echo "----- Making $IMAGE_NAME ramdisk ------"
 ./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 #lzma < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
+echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.img"
 echo "----- Making $IMAGE_NAME image ------"
 ./release-tools/mkbootimg --kernel $BIN_DIR/kernel --base 0x10008000 --pagesize 2048 --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --output $BIN_DIR/$IMAGE_NAME.img
-
+echo "  $BIN_DIR/$IMAGE_NAME.img"
 # size check
 #FILE_SIZE=`wc -c $BIN_DIR/$IMAGE_NAME.img | awk '{print $1}'`
 #if [ $FILE_SIZE -gt 13107200 ]; then
@@ -160,6 +162,7 @@ echo "----- Making $IMAGE_NAME image ------"
 #}
 
 # create odin image
+echo "----- odin3 image ------"
 cd $BIN_DIR
 tar cf $BUILD_LOCALVERSION-$IMAGE_NAME-odin.tar $IMAGE_NAME.img
 md5sum -t $BUILD_LOCALVERSION-$IMAGE_NAME-odin.tar >> $BUILD_LOCALVERSION-$IMAGE_NAME-odin.tar
@@ -167,21 +170,25 @@ mv $BUILD_LOCALVERSION-$IMAGE_NAME-odin.tar $BUILD_LOCALVERSION-$IMAGE_NAME-odin
 echo "  $BIN_DIR/$BUILD_LOCALVERSION-$IMAGE_NAME-odin.tar.md5"
 
 # create cwm image
-if [ -d tmp ]; then
-  rm -rf tmp
-fi
-mkdir -p ./tmp/META-INF/com/google/android
-cp $IMAGE_NAME.img ./tmp/
-cp $KERNEL_DIR/release-tools/update-binary ./tmp/META-INF/com/google/android/
-sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/updater-script-$IMAGE_NAME.sed > ./tmp/META-INF/com/google/android/updater-script
-cd tmp && zip -rq ../cwm.zip ./* && cd ../
-SIGNAPK_DIR=$KERNEL_DIR/release-tools/signapk
-java -jar $SIGNAPK_DIR/signapk.jar $SIGNAPK_DIR/testkey.x509.pem $SIGNAPK_DIR/testkey.pk8 cwm.zip $BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip
-rm cwm.zip
-rm -rf tmp
-echo "  $BIN_DIR/$BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip"
-#cleanup
-rm $KERNEL_DIR/$BIN_DIR/zImage
+function create_cwm_image()
+{
+	echo "----- Making cwm pakage ------"
+	if [ -d tmp ]; then
+	  rm -rf tmp
+	fi
+	mkdir -p ./tmp/META-INF/com/google/android
+	cp $IMAGE_NAME.img ./tmp/
+	cp $KERNEL_DIR/release-tools/update-binary ./tmp/META-INF/com/google/android/
+	sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/updater-script-$IMAGE_NAME.sed > ./tmp/META-INF/com/google/android/updater-script
+	cd tmp && zip -rq ../cwm.zip ./* && cd ../
+	SIGNAPK_DIR=$KERNEL_DIR/release-tools/signapk
+	java -jar $SIGNAPK_DIR/signapk.jar $SIGNAPK_DIR/testkey.x509.pem $SIGNAPK_DIR/testkey.pk8 cwm.zip $BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip
+	rm cwm.zip
+	rm -rf tmp
+	echo "  $BIN_DIR/$BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip"
+	#cleanup
+	rm $KERNEL_DIR/$BIN_DIR/zImage
+}
 
 cd $KERNEL_DIR
 #}
