@@ -173,17 +173,17 @@ fw-shipped-$(CONFIG_EPEN_WACOM_G9PM) += epen/W9001_B746.bin epen/W9001_B713.bin 
 fw-shipped-$(CONFIG_SENSORS_SSP) += ssp.fw
 fw-shipped-$(CONFIG_SENSORS_SSP) += ssp_crashed.fw
 
-TSPFIRMWARE_DIRECTORY = firmware/tsp_atmel
+TSPFIRMWARE_DIRECTORY=$(PWD)/firmware/tsp_atmel/
 ifeq ($(shell test -d $(TSPFIRMWARE_DIRECTORY) && echo yes),yes)
 fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_MXT540E) += tsp_atmel/mXT540E.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_MXT540S) += tsp_atmel/mXT540S.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_MXT768E) += tsp_atmel/mXT768E.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_MXT1664S) += tsp_atmel/mXT1664S.fw
 else
-$(warning '$(TSPFIRMWARE_DIRECTORY)' directory dose not exist)
+$(warning '/$(TSPFIRMWARE_DIRECTORY)' directory dose not exist)
 endif
 
-TSPFIRMWARE_DIRECTORY_MEL = firmware/tsp_melfas
+TSPFIRMWARE_DIRECTORY_MEL = $(PWD)/firmware/tsp_melfas/
 ifeq ($(shell test -d $(TSPFIRMWARE_DIRECTORY_MEL) && echo yes),yes)
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS) += tsp_melfas/CORE.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS) += tsp_melfas/PRIV.fw
@@ -192,7 +192,7 @@ else
 $(warning '$(TSPFIRMWARE_DIRECTORY)' directory dose not exist)
 endif
 
-TSPFIRMWARE_DIRECTORY_MEL_GC = firmware/tsp_melfas/gc
+TSPFIRMWARE_DIRECTORY_MEL_GC = $(PWD)/firmware/tsp_melfas/gc/
 ifeq ($(shell test -d $(TSPFIRMWARE_DIRECTORY_MEL_GC) && echo yes),yes)
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_GC) += tsp_melfas/gc/A_CORE.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_GC) += tsp_melfas/gc/A_PRIV.fw
@@ -207,7 +207,7 @@ else
 $(warning '$(TSPFIRMWARE_DIRECTORY)' directory dose not exist)
 endif
 
-TSPFIRMWARE_DIRECTORY_MEL_NOTE = firmware/tsp_melfas/note
+TSPFIRMWARE_DIRECTORY_MEL_NOTE = $(PWD)/firmware/tsp_melfas/note/
 ifeq ($(shell test -d $(TSPFIRMWARE_DIRECTORY_MEL_NOTE) && echo yes),yes)
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_NOTE) += tsp_melfas/note/melfasl.fw
 fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_NOTE) += tsp_melfas/note/melfasm.fw
