@@ -11,7 +11,8 @@ if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
 	INITRAMFS_SRC_DIR=../sc03e_ramdisk
 else
 	echo "=====> Build Device SC-02E"
-	INITRAMFS_SRC_DIR=../sc02e_ramdisk
+	#INITRAMFS_SRC_DIR=../sc02e_$IMAGE_NAME_ramdisk
+	INITRAMFS_SRC_DIR=../sc02e_boot_ramdisk
 fi
 
 if [ -z "$INITRAMFS_TMP_DIR" ]; then
@@ -62,8 +63,10 @@ mkdir -p $OBJ_DIR
 # generate LOCALVERSION
 if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
 . mod_version_sc03e
+#. mod_cmdline_sc03e
 else
 . mod_version_sc02e
+#. mod_cmdline_sc02e
 fi
 
 if [ -n "$BUILD_NUMBER" ]; then
