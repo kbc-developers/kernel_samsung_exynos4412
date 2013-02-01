@@ -698,6 +698,7 @@ static void felica_nl_wait_ret_msg(void)
 
 static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 {
+#if 0
 	register u32 reg0 __asm__("r0");
 	register u32 reg1 __asm__("r1");
 	register u32 reg2 __asm__("r2");
@@ -727,7 +728,9 @@ static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 		return -1;
 
 	*val = reg2;
-
+#else
+	*val = 0;
+#endif
 	return 0;
 }
 

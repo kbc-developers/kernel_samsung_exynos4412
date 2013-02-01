@@ -1,9 +1,7 @@
-assert(getprop("ro.product.device") == "galaxys2" || getprop("ro.build.product") == "galaxys2" || 
-       getprop("ro.product.device") == "GT-I9100" || getprop("ro.build.product") == "GT-I9100" || 
-       getprop("ro.product.device") == "GT-I9100M" || getprop("ro.build.product") == "GT-I9100M" || 
-       getprop("ro.product.device") == "GT-I9100P" || getprop("ro.build.product") == "GT-I9100P" || 
-       getprop("ro.product.device") == "SC-02C" || getprop("ro.build.product") == "SC-02C" || 
-       getprop("ro.product.device") == "GT-I9100T" || getprop("ro.build.product") == "GT-I9100T");
+
+assert(getprop("ro.product.device") == "SC-02E" || getprop("ro.build.product") == "SC-02E" || 
+       getprop("ro.product.device") == "GT-N7105" || getprop("ro.build.product") == "GT-N7105");
+
 ui_print("");
 ui_print("");
 ui_print("------------------------------------------------");
@@ -17,9 +15,9 @@ ui_print("");
 show_progress(0.500000, 0);
 
 ui_print("flashing kernel image...");
-assert(package_extract_file("zImage", "/tmp/zImage"),
-       write_raw_image("/tmp/zImage", "/dev/block/mmcblk0p5"),
-       delete("/tmp/zImage"));
+assert(package_extract_file("boot.img", "/tmp/boot.img"),
+       write_raw_image("/tmp/boot.img", "/dev/block/mmcblk0pXX"),
+       delete("/tmp/boot.img"));
 show_progress(0.100000, 0);
 
 ui_print("flash complete. Enjoy!");
