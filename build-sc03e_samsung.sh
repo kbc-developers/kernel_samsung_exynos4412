@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./_build.sh "SC02ESAM" $1 $2
+./_build.sh "SC03ESAM" $1 $2
