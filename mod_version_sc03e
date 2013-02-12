@@ -1,7 +1,7 @@
 ###########################################################
 # set kernel version
 ###########################################################
-TARGET_DEVICE=SC02E
+TARGET_DEVICE=SC03E
 BUILD_MOD=KBC
 BUILD_VERSION=V1.0.0
 
