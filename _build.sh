@@ -1,54 +1,61 @@
 #!/bin/bash
 
+copy_initramfs()
+{
+	_INITRAMFS_SRC_DIR=$1
+	_INITRAMFS_TMP_DIR=$2
+
+  echo copy to $_INITRAMFS_TMP_DIR ... $(basename $_INITRAMFS_SRC_DIR)
+  
+  if [ ! -d $(dirname $_INITRAMFS_TMP_DIR) ]; then
+    mkdir -p $(dirname $_INITRAMFS_TMP_DIR)
+  fi
+
+  if [ -d $_INITRAMFS_TMP_DIR ]; then
+    rm -rf $_INITRAMFS_TMP_DIR  
+  fi
+  cp -a $_INITRAMFS_SRC_DIR $INITRAMFS_TMP_DIR
+  rm -rf $_INITRAMFS_TMP_DIR/.git
+  find $_INITRAMFS_TMP_DIR -name .gitignore | xargs rm
+}
+
+
+# =====================================================
 KERNEL_DIR=$PWD
 export BUILD_DEVICE=$1
 
-IMAGE_NAME=boot
-#IMAGE_NAME=recovery
-
-if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
-	echo "=====> Build Device SC-03E"
-	INITRAMFS_SRC_DIR=../sc03e_ramdisk
-else
-	echo "=====> Build Device SC-02E"
-	#INITRAMFS_SRC_DIR=../sc02e_$IMAGE_NAME_ramdisk
-	INITRAMFS_SRC_DIR=../sc02e_boot_ramdisk
-fi
-
-if [ -z "$INITRAMFS_TMP_DIR" ]; then
-	if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
-		INITRAMFS_TMP_DIR=/tmp/sc03e_initramfs
-	else
-		INITRAMFS_TMP_DIR=/tmp/sc02e_initramfs
-	fi
-fi
-
-copy_initramfs()
-{
-  echo copy to $INITRAMFS_TMP_DIR ... $(dirname $INITRAMFS_TMP_DIR)
-  
-  if [ ! -d $(dirname $INITRAMFS_TMP_DIR) ]; then
-    mkdir -p $(dirname $INITRAMFS_TMP_DIR)
-  fi
-
-  if [ -d $INITRAMFS_TMP_DIR ]; then
-    rm -rf $INITRAMFS_TMP_DIR  
-  fi
-  cp -a $INITRAMFS_SRC_DIR $INITRAMFS_TMP_DIR
-  rm -rf $INITRAMFS_TMP_DIR/.git
-  find $INITRAMFS_TMP_DIR -name .gitignore | xargs rm
-}
-
 # check target
-# (note) MULTI and COM use same defconfig
 BUILD_TARGET=$1
 case "$BUILD_TARGET" in
-  "SC02EAOSP" ) BUILD_DEFCONFIG=sc02e_aosp_defconfig ;;
-  "SC02ESAM" ) BUILD_DEFCONFIG=sc02e_samsung_defconfig ;;
-  "SC03EAOSP" ) BUILD_DEFCONFIG=sc03e_aosp_defconfig ;;
-  "SC03ESAM" ) BUILD_DEFCONFIG=sc03e_samsung_defconfig ;;
+  "SC02EAOSP" ) device_name=sc02e;target=aosp ;;
+  "SC02ESAM" )  device_name=sc02e;target=samsung ;;
+  "SC03EAOSP" ) device_name=sc02e;target=aosp ;;
+  "SC03ESAM" )  device_name=sc02e;target=samsung ;;
   * ) echo "error: not found BUILD_TARGET" && exit -1 ;;
 esac
+
+
+#build targer (boot.img or recovery.img)
+if [ ! -n "$3" ]; then
+  echo ""
+  read -p "select build? [(b)oot/(r)cocery/(z)Image default:boot] " BUILD_SELECT
+else
+  BUILD_SELECT=$3
+fi
+if [ "$BUILD_SELECT" = 'recovery' -o "$BUILD_SELECT" = 'r' ]; then
+	IMAGE_NAME=recovery
+else
+	IMAGE_NAME=boot
+fi
+
+
+#build target seting
+BUILD_DEFCONFIG=${device_name}_${target}_defconfig
+
+INITRAMFS_SRC_DIR=../${device_name}_${IMAGE_NAME}_ramdisk
+if [ -z "$INITRAMFS_TMP_DIR" ]; then
+	INITRAMFS_TMP_DIR=/tmp/$(basename $INITRAMFS_SRC_DIR)
+fi
 
 BIN_DIR=out/$BUILD_TARGET/bin
 OBJ_DIR=out/$BUILD_TARGET/obj
@@ -61,13 +68,8 @@ mkdir -p $OBJ_DIR
 #fi
 
 # generate LOCALVERSION
-if [ "$BUILD_DEVICE" = "SC03ESAM" -o "$BUILD_DEVICE" = "SC03EAOSP" ];then
-. mod_version_sc03e
-#. mod_cmdline_sc03e
-else
-. mod_version_sc02e
-#. mod_cmdline_sc02e
-fi
+. mod_version_${device_name}
+
 
 if [ -n "$BUILD_NUMBER" ]; then
 export KBUILD_BUILD_VERSION="$BUILD_NUMBER"
@@ -93,7 +95,7 @@ fi
 # copy initramfs
 echo ""
 echo "=====> copy initramfs"
-copy_initramfs
+copy_initramfs $INITRAMFS_SRC_DIR $INITRAMFS_TMP_DIR
 
 
 # make start
