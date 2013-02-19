@@ -184,7 +184,7 @@ function create_cwm_image()
 	mkdir -p ./tmp/META-INF/com/google/android
 	cp $IMAGE_NAME.img ./tmp/
 	cp $KERNEL_DIR/release-tools/update-binary ./tmp/META-INF/com/google/android/
-	sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/updater-script-$IMAGE_NAME.sed > ./tmp/META-INF/com/google/android/updater-script
+	sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/updater-script_${device_name}_${IMAGE_NAME}.sed > ./tmp/META-INF/com/google/android/updater-script
 	cd tmp && zip -rq ../cwm.zip ./* && cd ../
 	SIGNAPK_DIR=$KERNEL_DIR/release-tools/signapk
 	java -jar $SIGNAPK_DIR/signapk.jar $SIGNAPK_DIR/testkey.x509.pem $SIGNAPK_DIR/testkey.pk8 cwm.zip $BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip
@@ -192,8 +192,9 @@ function create_cwm_image()
 	rm -rf tmp
 	echo "  $BIN_DIR/$BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip"
 	#cleanup
-	rm $KERNEL_DIR/$BIN_DIR/zImage
+	#rm $KERNEL_DIR/$BIN_DIR/$IMAGE_NAME.img
 }
+create_cwm_image
 
 cd $KERNEL_DIR
 #}
