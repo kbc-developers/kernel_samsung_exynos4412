@@ -574,13 +574,13 @@ static void felica_nl_recv_msg(struct sk_buff *skb)
 			gfa_pid = nlh->nlmsg_pid;
 
 #if defined(CONFIG_MACH_T0)
-			port_threshold = 0x0a;
+			port_threshold = 0x09;
 #elif defined(CONFIG_MACH_M3)
 			port_threshold = 0x02;
 #endif
 		if (felica_get_tamper_fuse_cmd() != 1) {
 			if (system_rev >= port_threshold) {
-				s3c_gpio_cfgall_range(FELICA_UART1RX, 2,\
+				s3c_gpio_cfgall_range(FELICA_UART1RX, 4,\
 				S3C_GPIO_SFN(2), S3C_GPIO_PULL_DOWN);
 				felica_uart_port = 1;
 			} else {
@@ -675,7 +675,6 @@ static void felica_nl_wait_ret_msg(void)
 
 static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 {
-#if 0
 	register u32 reg0 __asm__("r0");
 	register u32 reg1 __asm__("r1");
 	register u32 reg2 __asm__("r2");
@@ -687,7 +686,7 @@ static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 		reg1 = 1;
 		reg2 = idx;
 
-		__asm__ volatile ("smc    0\n" : "+r" (reg0), "+r"(reg1),
+		__asm__ volatile (".arch_extension sec\n smc    0\n" : "+r" (reg0), "+r"(reg1),
 				  "+r"(reg2), "+r"(reg3)
 		    );
 		if (reg1)
@@ -698,16 +697,14 @@ static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 	reg1 = 1;
 	reg2 = idx;
 
-	__asm__ volatile ("smc    0\n" : "+r" (reg0), "+r"(reg1),
+	__asm__ volatile (".arch_extension sec\n smc    0\n" : "+r" (reg0), "+r"(reg1),
 		"+r"(reg2),  "+r"(reg3)
 	    );
 	if (reg1)
 		return -1;
 
 	*val = reg2;
-#else
-	*val = 0;
-#endif
+
 	return 0;
 }
 
