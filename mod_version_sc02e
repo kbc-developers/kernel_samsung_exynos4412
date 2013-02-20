@@ -23,7 +23,7 @@ if [ ! "$RELEASE_BUILD" = 'y' ]; then
   BUILD_VERSION=`date +%Y%m%d`
   
   if [ -n "$BUILD_NUMBER" ]; then
-    BUILD_VERSION=`date +%Y%m%d`"#$BUILD_NUMBER"
+    BUILD_VERSION=`date +%Y%m%d`"r$BUILD_NUMBER"
     export KBUILD_BUILD_VERSION="$BUILD_NUMBER"
   fi
 fi

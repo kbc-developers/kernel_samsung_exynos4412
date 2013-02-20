@@ -29,8 +29,8 @@ BUILD_TARGET=$1
 case "$BUILD_TARGET" in
   "SC02EAOSP" ) device_name=sc02e;target=aosp ;;
   "SC02ESAM" )  device_name=sc02e;target=samsung ;;
-  "SC03EAOSP" ) device_name=sc02e;target=aosp ;;
-  "SC03ESAM" )  device_name=sc02e;target=samsung ;;
+  "SC03EAOSP" ) device_name=sc03e;target=aosp ;;
+  "SC03ESAM" )  device_name=sc03e;target=samsung ;;
   * ) echo "error: not found BUILD_TARGET" && exit -1 ;;
 esac
 
@@ -151,8 +151,10 @@ echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 ./release-tools/mkbootfs $INITRAMFS_TMP_DIR > $BIN_DIR/ramdisk-$IMAGE_NAME.cpio
 echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.cpio"
 echo "----- Making $IMAGE_NAME ramdisk ------"
+
 ./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 #lzma < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
+
 echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.img"
 echo "----- Making $IMAGE_NAME image ------"
 ./release-tools/mkbootimg --kernel $BIN_DIR/kernel --base 0x10008000 --pagesize 2048 --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --output $BIN_DIR/$IMAGE_NAME.img
