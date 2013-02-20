@@ -63,9 +63,9 @@ mkdir -p $BIN_DIR
 mkdir -p $OBJ_DIR
 
 # boot splash header
-#if [ -f ./drivers/video/samsung/logo_rgb24_user.h ]; then
-#  export USER_BOOT_SPLASH=y
-#fi
+if [ -f ./drivers/video/samsung/logo_rgb24_user.h ]; then
+  export USER_BOOT_SPLASH=y
+fi
 
 # generate LOCALVERSION
 . mod_version_${device_name}
@@ -83,7 +83,7 @@ export CROSS_COMPILE=$BUILD_CROSS_COMPILE
 export USE_SEC_FIPS_MODE=true
 export LOCALVERSION="-$BUILD_LOCALVERSION"
 
-echo "=====> BUILD START $BUILD_KERNELVERSION-$BUILD_LOCALVERSION"
+echo "=====> BUILD START $BUILD_KERNELVERSION-$BUILD_LOCALVERSION with USER_BOOT_SPLASH=$USER_BOOT_SPLASH"
 
 if [ ! -n "$2" ]; then
   echo ""
