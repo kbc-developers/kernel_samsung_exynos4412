@@ -152,8 +152,8 @@ echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.cpio"
 echo "----- Making $IMAGE_NAME ramdisk ------"
 
-./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
-#lzma < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
+#./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
+lzma < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 
 echo "  $BIN_DIR/ramdisk-$IMAGE_NAME.img"
 echo "----- Making $IMAGE_NAME image ------"
