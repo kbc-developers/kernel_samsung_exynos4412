@@ -183,6 +183,8 @@ struct s5c73m3_state {
 	u8 sensor_fw[10];
 	u8 phone_fw[10];
 
+	u8 sensor_type[15];
+
 #ifdef CONFIG_CAM_DEBUG
 	u8 dbg_level;
 #endif
@@ -238,7 +240,12 @@ struct s5c73m3_state {
 
 #define S5C73M3_FLASH_TORCH		0x0B12
 #define S5C73M3_FLASH_TORCH_OFF		0x0000
+
+#if defined(CONFIG_MACH_M3_JPN_DCM)
+#define S5C73M3_FLASH_TORCH_ON		0x0004
+#else
 #define S5C73M3_FLASH_TORCH_ON		0x0001
+#endif
 
 #define S5C73M3_AE_ISNEEDFLASH		0x0CBA
 #define S5C73M3_AE_ISNEEDFLASH_OFF	0x0000

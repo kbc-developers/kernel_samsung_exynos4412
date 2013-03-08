@@ -500,18 +500,18 @@ static int send_message(struct fsg_common *common, char *msg)
 	return 0;
 }
 
-static int do_timer_stop(struct fsg_common *common)
+static int do_autorun_check(struct fsg_common *common)
 {
 	printk(KERN_INFO "%s called\n", __func__);
-	send_message(common, "time stop");
+	send_message(common, "autorun");
 
 	return 0;
 }
 
-static int do_timer_reset(struct fsg_common *common)
+static int do_switch_atmode(struct fsg_common *common)
 {
 	printk(KERN_INFO "%s called\n", __func__);
-	send_message(common, "time reset");
+	send_message(common, "Load AT");
 
 	return 0;
 }
@@ -2576,12 +2576,12 @@ static int do_scsi_command(struct fsg_common *common)
 
 #if defined(CONFIG_USB_CDFS_SUPPORT)
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-	case RELEASE:	/* SUA Timer Stop : 0x17 */
-		reply = do_timer_stop(common);
+	case RELEASE:	/* SC_AUTORUN_CHECK0 : 0x17 */
+		reply = do_switch_atmode(common);
 		break;
 
-	case RESERVE:	/* SUA Timer Reset : 0x16 */
-		reply = do_timer_reset(common);
+	case RESERVE:	/* SC_AUTORUN_CHECK1 : 0x16 */
+		reply = do_autorun_check(common);
 		break;
 
 #ifdef _SUPPORT_MAC_

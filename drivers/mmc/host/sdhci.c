@@ -2358,10 +2358,7 @@ EXPORT_SYMBOL_GPL(sdhci_suspend_host);
 
 void sdhci_shutdown_host(struct sdhci_host *host)
 {
-	u32 irqs = 0xFFFF;
-
-	/* all interrupt has to be masked */
-	sdhci_mask_irqs(host, irqs);
+	sdhci_disable_card_detection(host);
 
 	free_irq(host->irq, host);
 

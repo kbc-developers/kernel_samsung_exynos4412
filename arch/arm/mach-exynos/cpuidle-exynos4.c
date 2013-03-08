@@ -419,7 +419,6 @@ static int exynos4_check_operation(void)
 
 	if (loop_sdmmc_check())
 		return 1;
-
 #ifdef CONFIG_SND_SAMSUNG_RP
 	if (srp_get_op_level())
 		return 1;
@@ -430,7 +429,7 @@ static int exynos4_check_operation(void)
 #endif
 	if (check_usb_op())
 		return 1;
-	
+
 #if defined(CONFIG_ISDBT)
 	if (check_isdbt_op())
 		return 1;

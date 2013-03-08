@@ -32,8 +32,8 @@
 #include <linux/device.h>
 #include <linux/ir_remote_con_mc96.h>
 #include <linux/earlysuspend.h>
+#include <linux/spinlock.h>
 #include "irda_fw.h"
-#include <mach/gpio-rev00-p4notepq.h>
 
 #define MAX_SIZE 2048
 #define MC96_READ_LENGTH	8
@@ -45,6 +45,7 @@ struct ir_remocon_data {
 	struct i2c_client		*client;
 	struct mc96_platform_data	*pdata;
 	struct early_suspend		early_suspend;
+	spinlock_t                              lock;
 	char signal[MAX_SIZE];
 	int length;
 	int count;
@@ -59,9 +60,6 @@ static void ir_remocon_early_suspend(struct early_suspend *h);
 static void ir_remocon_late_resume(struct early_suspend *h);
 #endif
 
-static int count_number;
-static int ack_number;
-
 static int irda_fw_update(struct ir_remocon_data *ir_data)
 {
 	struct ir_remocon_data *data = ir_data;
@@ -70,7 +68,6 @@ static int irda_fw_update(struct ir_remocon_data *ir_data)
 	u8 buf_ir_test[8];
 
 	data->pdata->ir_vdd_onoff(0);
-	data->pdata->ir_wake_en(0);
 	data->pdata->ir_wake_en(1);
 	data->pdata->ir_vdd_onoff(1);
 	msleep(100);
@@ -125,7 +122,7 @@ static int irda_fw_update(struct ir_remocon_data *ir_data)
 
 		ret = buf_ir_test[6] << 8 | buf_ir_test[7];
 
-		if (ret == 0x01ba)
+		if (ret == 0x02a3)
 			printk(KERN_INFO "6. %s: boot down complete\n",
 				__func__);
 		else
@@ -138,8 +135,7 @@ static int irda_fw_update(struct ir_remocon_data *ir_data)
 		ret = i2c_master_recv(client, buf_ir_test, MC96_READ_LENGTH);
 
 		ret = buf_ir_test[2] << 8 | buf_ir_test[3];
-		printk(KERN_INFO "7. %s: user mode : Upgrade FW_version : %04x\n",
-						__func__, ret);
+		printk(KERN_INFO "7. %s: user mode dev: %04x\n", __func__, ret);
 		data->pdata->ir_vdd_onoff(0);
 		data->on_off = 0;
 
@@ -155,11 +151,9 @@ static int irda_fw_update(struct ir_remocon_data *ir_data)
 err_i2c_fail:
 	printk(KERN_ERR "%s: update fail! i2c ret : %x\n",
 							__func__, ret);
-	return ret;
 err_update:
 	printk(KERN_ERR "%s: update fail! count : %x, ret = %x\n",
 							__func__, i, ret);
-	return ret;
 err_bootmode:
 	printk(KERN_ERR "%s: update fail, ret = %x\n", __func__, ret);
 	data->pdata->ir_vdd_onoff(0);
@@ -171,9 +165,9 @@ static void irda_add_checksum_length(struct ir_remocon_data *ir_data, int count)
 {
 	struct ir_remocon_data *data = ir_data;
 	int i = 0, csum = 0;
-#if 0
+
 	printk(KERN_INFO "%s: length: %04x\n", __func__, count);
-#endif
+
 	data->signal[0] = count >> 8;
 	data->signal[1] = count & 0xff;
 
@@ -222,22 +216,17 @@ static void ir_remocon_work(struct ir_remocon_data *ir_data, int count)
 	struct i2c_client *client = data->client;
 
 	int buf_size = count+2;
-	int ret;
+	int ret, i;
 	int sleep_timing;
 	int end_data;
 	int emission_time;
-	int ack_pin_onoff;
-
-	if (count_number >= 100)
-		count_number = 0;
-
-	count_number++;
+	unsigned long flags;
 
 	printk(KERN_INFO "%s: total buf_size: %d\n", __func__, buf_size);
 
 	irda_add_checksum_length(data, count);
 
-	mutex_lock(&data->mutex);
+	spin_lock_irqsave(&data->lock, flags);
 
 	ret = i2c_master_send(client, data->signal, buf_size);
 	if (ret < 0) {
@@ -247,29 +236,16 @@ static void ir_remocon_work(struct ir_remocon_data *ir_data, int count)
 			dev_err(&client->dev, "%s: err2 %d\n", __func__, ret);
 	}
 
-	mdelay(10);
-
-	ack_pin_onoff = 0;
-	if (gpio_get_value(GPIO_IRDA_IRQ)) {
-		printk(KERN_INFO "%s : %d Checksum NG!\n",
-			__func__, count_number);
-		ack_pin_onoff = 1;
-	} else {
-		printk(KERN_INFO "%s : %d Checksum OK!\n",
-			__func__, count_number);
-		ack_pin_onoff = 2;
-	}
-	ack_number = ack_pin_onoff;
-
-	mutex_unlock(&data->mutex);
+	spin_unlock_irqrestore(&data->lock, flags);
 
 /*
-	for (int i = 0; i < buf_size; i++) {
+	for (i = 0; i < buf_size; i++) {
 		printk(KERN_INFO "%s: data[%d] : 0x%02x\n", __func__, i,
 				data->signal[i]);
 	}
 */
 	data->count = 2;
+
 
 	end_data = data->signal[count-2] << 8 | data->signal[count-1];
 	emission_time = \
@@ -277,27 +253,7 @@ static void ir_remocon_work(struct ir_remocon_data *ir_data, int count)
 	sleep_timing = emission_time - 130;
 	if (sleep_timing > 0)
 		msleep(sleep_timing);
-/*
 	printk(KERN_INFO "%s: sleep_timing = %d\n", __func__, sleep_timing);
-*/
-	emission_time = \
-		(1000 * (data->ir_sum) / (data->ir_freq)) + 50;
-	if (emission_time > 0)
-		msleep(emission_time);
-		printk(KERN_INFO "%s: emission_time = %d\n",
-					__func__, emission_time);
-
-	if (gpio_get_value(GPIO_IRDA_IRQ)) {
-		printk(KERN_INFO "%s : %d Sending IR OK!\n",
-				__func__, count_number);
-		ack_pin_onoff = 4;
-	} else {
-		printk(KERN_INFO "%s : %d Sending IR NG!\n",
-				__func__, count_number);
-		ack_pin_onoff = 2;
-	}
-
-	ack_number += ack_pin_onoff;
 #ifndef USE_STOP_MODE
 	data->pdata->ir_vdd_onoff(0);
 	data->on_off = 0;
@@ -372,21 +328,7 @@ static ssize_t remocon_show(struct device *dev, struct device_attribute *attr,
 	return strlen(buf);
 }
 
-static ssize_t remocon_ack(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ir_remocon_data *data = dev_get_drvdata(dev);
-
-	printk(KERN_INFO "%s : ack_number = %d\n", __func__, ack_number);
-
-	if (ack_number == 6)
-		return snprintf(buf, 1, "%d\n", 1);
-	else
-		return snprintf(buf, 1, "%d\n", 0);
-}
-
 static DEVICE_ATTR(ir_send, 0664, remocon_show, remocon_store);
-static DEVICE_ATTR(ir_send_result, 0664, remocon_ack, NULL);
 
 static ssize_t check_ir_show(struct device *dev, struct device_attribute *attr,
 		char *buf)
@@ -424,6 +366,7 @@ static int __devinit ir_remocon_probe(struct i2c_client *client,
 	data->client = client;
 	data->pdata = client->dev.platform_data;
 
+	data->pdata->ir_remote_init();
 	mutex_init(&data->mutex);
 	data->count = 2;
 	data->on_off = 0;
@@ -431,6 +374,8 @@ static int __devinit ir_remocon_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, data);
 
 	irda_fw_update(data);
+
+	spin_lock_init(&data->lock);
 /*
 	irda_read_device_info(data);
 */
@@ -440,10 +385,6 @@ static int __devinit ir_remocon_probe(struct i2c_client *client,
 		pr_err("Failed to create ir_remocon_dev device\n");
 
 	if (device_create_file(ir_remocon_dev, &dev_attr_ir_send) < 0)
-		pr_err("Failed to create device file(%s)!\n",
-				dev_attr_ir_send.attr.name);
-
-	if (device_create_file(ir_remocon_dev, &dev_attr_ir_send_result) < 0)
 		pr_err("Failed to create device file(%s)!\n",
 				dev_attr_ir_send.attr.name);
 

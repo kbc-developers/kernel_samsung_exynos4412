@@ -367,15 +367,16 @@ long isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case IOCTL_ISDBT_INIT:
 		res = BBM_PROBE(hInit);
 		if (res) {
-			if (system_rev == 11)
-			{
+			if (system_rev < 6)
+			{	
+				isdbt_hw_init();
 				PRINTF(hInit, "FC8150 Chip ID is not correct - Wait for 3sec\n");
 				msWait(3000);
 			}
 			else
 			{
 				PRINTF(hInit, "FC8150 Initialize Fail\n");
-				//break;
+				break;
 			}	
 		}
 		
@@ -692,10 +693,12 @@ static int isdbt_probe(struct platform_device *pdev)
 	printk("%s\n", __func__);
 
 	res = misc_register(&fc8150_misc_device);
+
 	if (res < 0) {
 		PRINTF(hInit, "isdbt init fail : %d\n", res);
 		return res;
 	}
+
 	isdbt_hw_setting();
 
 	isdbt_hw_init();
@@ -739,12 +742,37 @@ err_reg_input:
 
 }
 
+static int isdbt_remove(struct platform_device *pdev)
+{
+        printk("ISDBT remove\n");
+#if defined(CONFIG_ISDBT_ANT_DET)
+	isdbt_ant_det_unreg_input();
+	isdbt_ant_det_destroy_wq();
+	isdbt_ant_det_irq_set(false);
+	wake_lock_destroy(&isdbt_ant_wlock);
+#endif
+	return 0;
+}
+
+static int isdbt_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	return 0;
+}
+
+static int isdbt_resume(struct platform_device *pdev)
+{
+	return 0;
+}
+
 static struct platform_driver isdbt_driver = {
-			.probe	= isdbt_probe,
-			.driver = {
-					.owner	= THIS_MODULE,
-					.name = "isdbt"
-				},
+	.probe	= isdbt_probe,
+	.remove = isdbt_remove,
+	.suspend = isdbt_suspend,
+	.resume = isdbt_resume,
+	.driver = {
+		.owner	= THIS_MODULE,
+		.name = "isdbt"
+		},
 };
 
 int isdbt_init(void)
@@ -761,18 +789,7 @@ int isdbt_init(void)
 
 	return 0;
 }
-static int isdbt_remove(struct platform_device *pdev)
-{
-#if defined(CONFIG_ISDBT_ANT_DET)
-        printk("ISDBT remove\n");
-	isdbt_ant_det_unreg_input();
-	isdbt_ant_det_destroy_wq();
-	isdbt_ant_det_irq_set(false);
-	wake_lock_destroy(&isdbt_ant_wlock);
-#endif
 
-	return 0;
-}
 
 void isdbt_exit(void)
 {

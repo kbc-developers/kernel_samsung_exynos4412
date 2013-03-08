@@ -36,12 +36,10 @@
 #include <linux/usb/hcd.h>
 #include <linux/usb/ehci_def.h>
 
-#ifdef CONFIG_CPU_FREQ_TETHERING
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <mach/mdm2.h>
 #include <linux/usb/android_composite.h>
-#endif
 
 #define EXTERNAL_MODEM "external_modem"
 #define EHCI_REG_DUMP
@@ -87,10 +85,8 @@ struct mdm_hsic_pm_data {
 
 	/* control variables */
 	struct notifier_block pm_notifier;
-#ifdef CONFIG_CPU_FREQ_TETHERING
 	struct notifier_block netdev_notifier;
 	struct notifier_block usb_composite_notifier;
-#endif
 
 	bool block_request;
 	bool state_busy;
@@ -243,7 +239,7 @@ int pm_dev_runtime_get_enabled(struct usb_device *udev)
 	int spin = 50;
 
 	while (spin--) {
-		pr_debug("%s: rpm status: %d\n", __func__,
+		pr_err("%s: rpm status: %d\n", __func__,
 						udev->dev.power.runtime_status);
 		if (udev->dev.power.runtime_status == RPM_ACTIVE ||
 			udev->dev.power.runtime_status == RPM_SUSPENDED) {
@@ -314,7 +310,6 @@ void request_autopm_lock(int status)
 {
 	struct mdm_hsic_pm_data *pm_data =
 					get_pm_data_by_dev_name("mdm_hsic_pm0");
-	int spin = 5;
 
 	if (!pm_data || !pm_data->udev)
 		return;
@@ -325,15 +320,6 @@ void request_autopm_lock(int status)
 		if (!atomic_read(&pm_data->pmlock_cnt)) {
 			atomic_inc(&pm_data->pmlock_cnt);
 			pr_info("get lock\n");
-
-			do {
-				if (!pm_dev_runtime_get_enabled(pm_data->udev))
-					break;
-			} while (spin--);
-
-			if (spin <= 0)
-				mdm_force_fatal();
-
 			pm_runtime_get(&pm_data->udev->dev);
 			pm_runtime_forbid(&pm_data->udev->dev);
 		} else
@@ -888,7 +874,7 @@ static int mdm_hsic_pm_gpio_init(struct mdm_hsic_pm_data *pm_data,
 		s3c_gpio_setpull(pm_data->gpio_host_ready, S3C_GPIO_PULL_NONE);
 		s5p_gpio_set_drvstr(pm_data->gpio_host_ready,
 							S5P_GPIO_DRVSTR_LV4);
-		gpio_set_value(pm_data->gpio_host_ready, 1);
+		gpio_set_value(pm_data->gpio_host_ready, 1);		
 	} else
 		return -ENXIO;
 
@@ -943,7 +929,6 @@ static void mdm_hsic_pm_gpio_free(struct mdm_hsic_pm_data *pm_data)
 		gpio_free(pm_data->gpio_host_wake);
 }
 
-#ifdef CONFIG_CPU_FREQ_TETHERING
 static int link_pm_netdev_event(struct notifier_block *this,
 				unsigned long event, void *ptr)
 {
@@ -997,7 +982,6 @@ static int usb_composite_notifier_event(struct notifier_block *this,
 
 	return NOTIFY_DONE;
 }
-#endif
 
 static int mdm_hsic_pm_probe(struct platform_device *pdev)
 {
@@ -1058,14 +1042,12 @@ static int mdm_hsic_pm_probe(struct platform_device *pdev)
 	blocking_notifier_chain_register(&mdm_reset_notifier_list,
 							&mdm_reset_main_block);
 
-#ifdef CONFIG_CPU_FREQ_TETHERING
 	pm_data->netdev_notifier.notifier_call = link_pm_netdev_event;
 	register_netdevice_notifier(&pm_data->netdev_notifier);
 
 	pm_data->usb_composite_notifier.notifier_call =
 		usb_composite_notifier_event;
 	register_usb_composite_notifier(&pm_data->usb_composite_notifier);
-#endif
 
 	wake_lock_init(&pm_data->l2_wake, WAKE_LOCK_SUSPEND, pm_data->name);
 	wake_lock_init(&pm_data->boot_wake, WAKE_LOCK_SUSPEND, "mdm_boot");
