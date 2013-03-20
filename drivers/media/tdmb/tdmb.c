@@ -49,13 +49,14 @@
 
 #include <linux/io.h>
 #include <mach/gpio.h>
+#include <linux/wakelock.h>
+#include <linux/input.h>
 
 #if defined(CONFIG_TDMB_ANT_DET)
-#include <linux/input.h>
+static struct wake_lock tdmb_ant_wlock;
 #endif
 
 #ifdef CONFIG_MACH_C1
-#include <linux/wakelock.h>
 static struct wake_lock tdmb_wlock;
 #endif
 #include "tdmb.h"
@@ -543,22 +544,34 @@ static struct tdmb_drv_func *tdmb_get_drv_func(void)
 }
 
 #if defined(CONFIG_TDMB_ANT_DET)
+enum {
+	TDMB_ANT_OPEN = 0,
+	TDMB_ANT_CLOSE,
+	TDMB_ANT_UNKNOWN,
+};
+enum {
+	TDMB_ANT_DET_LOW = 0,
+	TDMB_ANT_DET_HIGH,
+};
 
 static struct input_dev *tdmb_ant_input;
 static int tdmb_check_ant;
 static int ant_prev_status;
 
-#define TDMB_ANT_CHECK_DURATION 500000
+#define TDMB_ANT_CHECK_DURATION 500000 /* us */
 #define TDMB_ANT_CHECK_COUNT 2
-static bool tdmb_ant_det_check_value(void)
+#define TDMB_ANT_WLOCK_TIMEOUT \
+		((TDMB_ANT_CHECK_DURATION * TDMB_ANT_CHECK_COUNT * 2) / 1000000)
+static int tdmb_ant_det_check_value(void)
 {
 	int loop = 0;
 	int cur_val = 0, prev_val = 0;
-	bool ret = false;
+	int ret = TDMB_ANT_UNKNOWN;
 
 	tdmb_check_ant = 1;
 
-	prev_val = ant_prev_status ? 0 : 1;
+	prev_val = \
+		ant_prev_status ? TDMB_ANT_DET_LOW : TDMB_ANT_DET_HIGH;
 	for (loop = 0; loop < TDMB_ANT_CHECK_COUNT; loop++) {
 		usleep_range(TDMB_ANT_CHECK_DURATION, TDMB_ANT_CHECK_DURATION);
 		cur_val = gpio_get_value_cansleep(gpio_cfg.gpio_ant_det);
@@ -568,39 +581,57 @@ static bool tdmb_ant_det_check_value(void)
 	}
 
 	if (loop == TDMB_ANT_CHECK_COUNT) {
-		if (ant_prev_status == 0 && cur_val == 1)
-			ret = true;
+		if (ant_prev_status == TDMB_ANT_DET_LOW
+				&& cur_val == TDMB_ANT_DET_HIGH) {
+			ret = TDMB_ANT_OPEN;
+		} else if (ant_prev_status == TDMB_ANT_DET_HIGH
+				&& cur_val == TDMB_ANT_DET_LOW) {
+			ret = TDMB_ANT_CLOSE;
+		}
 
 		ant_prev_status = cur_val;
 	}
 
 	tdmb_check_ant = 0;
 
-	DPRINTK("%s cnt(%d) cur(%d) ret(%d)\n", __func__, loop, cur_val, ret);
+	DPRINTK("%s cnt(%d) cur(%d) prev(%d)\n",
+		__func__, loop, cur_val, ant_prev_status);
 
 	return ret;
 }
 
 static int tdmb_ant_det_ignore_irq(void)
 {
-	DPRINTK("%s tdmb_check_ant=%d\n", __func__, tdmb_check_ant);
+	DPRINTK("chk_ant=%d sr=%d\n",
+			tdmb_check_ant, system_rev);
 	return tdmb_check_ant;
 }
 
 static void tdmb_ant_det_work_func(struct work_struct *work)
 {
-	int val = 0;
-
 	if (!tdmb_ant_input) {
 		DPRINTK("%s: input device is not registered\n", __func__);
 		return;
 	}
 
-	if (tdmb_ant_det_check_value()) {
+	switch (tdmb_ant_det_check_value()) {
+	case TDMB_ANT_OPEN:
 		input_report_key(tdmb_ant_input, KEY_DMB_ANT_DET_UP, 1);
 		input_report_key(tdmb_ant_input, KEY_DMB_ANT_DET_UP, 0);
 		input_sync(tdmb_ant_input);
-		DPRINTK("%s: sys_rev:%d\n", __func__, system_rev);
+		DPRINTK("%s : TDMB_ANT_OPEN\n", __func__);
+		break;
+	case TDMB_ANT_CLOSE:
+		input_report_key(tdmb_ant_input, KEY_DMB_ANT_DET_DOWN, 1);
+		input_report_key(tdmb_ant_input, KEY_DMB_ANT_DET_DOWN, 0);
+		input_sync(tdmb_ant_input);
+		DPRINTK("%s : TDMB_ANT_CLOSE\n", __func__);
+		break;
+	case TDMB_ANT_UNKNOWN:
+		DPRINTK("%s : TDMB_ANT_UNKNOWN\n", __func__);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -675,6 +706,8 @@ static irqreturn_t tdmb_ant_det_irq_handler(int irq, void *dev_id)
 
 	if (tdmb_ant_det_ignore_irq())
 		return IRQ_HANDLED;
+
+	wake_lock_timeout(&tdmb_ant_wlock, TDMB_ANT_WLOCK_TIMEOUT * HZ);
 
 	if (tdmb_ant_det_wq) {
 		ret = queue_work(tdmb_ant_det_wq, &tdmb_ant_det_work);
@@ -766,6 +799,8 @@ static int tdmb_probe(struct platform_device *pdev)
 #endif
 
 #if defined(CONFIG_TDMB_ANT_DET)
+	wake_lock_init(&tdmb_ant_wlock, WAKE_LOCK_SUSPEND, "tdmb_ant_wlock");
+
 	if (!tdmb_ant_det_reg_input(pdev))
 		goto err_reg_input;
 	if (!tdmb_ant_det_create_wq())
@@ -794,6 +829,7 @@ static int tdmb_remove(struct platform_device *pdev)
 	tdmb_ant_det_unreg_input();
 	tdmb_ant_det_destroy_wq();
 	tdmb_ant_det_irq_set(false);
+	wake_lock_destroy(&tdmb_ant_wlock);
 #endif
 	return 0;
 }

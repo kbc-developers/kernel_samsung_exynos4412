@@ -367,8 +367,8 @@ long isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case IOCTL_ISDBT_INIT:
 		res = BBM_PROBE(hInit);
 		if (res) {
-			if (system_rev < 6)
-			{	
+			if (system_rev == 11)
+			{
 				isdbt_hw_init();
 				PRINTF(hInit, "FC8150 Chip ID is not correct - Wait for 3sec\n");
 				msWait(3000);
@@ -379,7 +379,7 @@ long isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				break;
 			}	
 		}
-		
+
 		res = BBM_INIT(hInit);
 		res |= BBM_I2C_INIT(hInit, FCI_I2C_TYPE);
 		break;
@@ -693,12 +693,10 @@ static int isdbt_probe(struct platform_device *pdev)
 	printk("%s\n", __func__);
 
 	res = misc_register(&fc8150_misc_device);
-
 	if (res < 0) {
 		PRINTF(hInit, "isdbt init fail : %d\n", res);
 		return res;
 	}
-
 	isdbt_hw_setting();
 
 	isdbt_hw_init();

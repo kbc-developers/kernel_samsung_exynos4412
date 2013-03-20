@@ -52,8 +52,8 @@ INCLUDES += \
 		-I$(UDD_FILE_PREFIX)linux\
 		-I$(UDD_FILE_PREFIX)include\
 		-I$(UDD_FILE_PREFIX)linux/license/gpl/\
-		-I$(UDD_FILE_PREFIX)../mali/common\
-		-I$(UDD_FILE_PREFIX)../mali/linux
+		-I$(UDD_FILE_PREFIX)../mali_r3p1_lsi/common\
+		-I$(UDD_FILE_PREFIX)../mali_r3p1_lsi/linux
 
 OSKFILES+=\
 		$(KBUILDROOT)../mali_r3p1_lsi/linux/mali_osk_atomics.o \

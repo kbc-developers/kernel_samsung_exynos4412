@@ -1036,7 +1036,9 @@ skip_reset:
 }
 
 /*-------------------------------------------------------------------------*/
-
+#ifdef CONFIG_MDM_HSIC_PM
+#define TX_ERR_CRASH_THRS 100
+#endif
 static void tx_complete (struct urb *urb)
 {
 	struct sk_buff		*skb = (struct sk_buff *) urb->context;

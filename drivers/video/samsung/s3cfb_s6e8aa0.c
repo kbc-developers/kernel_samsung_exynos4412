@@ -1322,7 +1322,7 @@ static void s6e8ax0_read_id(struct lcd_info *lcd, u8 *buf)
 {
 	int ret = 0;
 
-	ret = s6e8ax0_read(lcd, LDI_ID_REG, LDI_ID_LEN, buf, 3);
+	ret = s6e8ax0_read(lcd, LDI_ID_REG, LDI_ID_LEN, buf, 2);
 	if (!ret) {
 		lcd->connected = 0;
 		dev_info(&lcd->ld->dev, "panel is not connected well\n");
@@ -1334,7 +1334,7 @@ static int s6e8ax0_read_mtp(struct lcd_info *lcd, u8 *mtp_data)
 {
 	int ret;
 
-	ret = s6e8ax0_read(lcd, LDI_MTP_ADDR, LDI_MTP_LENGTH, mtp_data, 0);
+	ret = s6e8ax0_read(lcd, LDI_MTP_ADDR, LDI_MTP_LENGTH, mtp_data, 1);
 
 	return ret;
 }

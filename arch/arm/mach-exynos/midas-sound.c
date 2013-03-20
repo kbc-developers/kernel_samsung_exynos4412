@@ -471,10 +471,6 @@ void __init midas_sound_init(void)
 		i2c_register_board_info(I2C_NUM_CODEC, i2c_wm1811,
 						ARRAY_SIZE(i2c_wm1811));
 
-#elif defined(CONFIG_MACH_M3_JPN_DCM)
-		SET_PLATDATA_CODEC(NULL);
-		i2c_register_board_info(I2C_NUM_CODEC, i2c_wm1811,
-						ARRAY_SIZE(i2c_wm1811));
 #else
 	if (system_rev != 3 && system_rev >= 0) {
 		SET_PLATDATA_CODEC(NULL);

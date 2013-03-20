@@ -117,7 +117,7 @@ extern void midas_config_sleep_gpio_table(void);
 
 #define GPIO_3_TOUCH_SCL		EXYNOS4_GPL0(1)
 #define GPIO_3_TOUCH_SDA		EXYNOS4_GPL0(2)
-#if defined(CONFIG_TARGET_LOCALE_EUR) || defined(CONFIG_MACH_M3_JPN_DCM)
+#ifdef CONFIG_TARGET_LOCALE_EUR
 #define GPIO_VPS_SOUND_EN		EXYNOS4_GPL0(3)
 #endif
 #define GPIO_HDMI_EN			EXYNOS4_GPL0(4)

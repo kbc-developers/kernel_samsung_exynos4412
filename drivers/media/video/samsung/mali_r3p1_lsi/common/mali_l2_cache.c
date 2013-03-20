@@ -202,8 +202,6 @@ mali_bool mali_l2_cache_core_set_counter_src0(struct mali_l2_cache_core *cache, 
 
 	_mali_osk_lock_wait(cache->counter_lock, _MALI_OSK_LOCKMODE_RW);
 
-	MALI_DEBUG_PRINT(2, ("Mali L2 core 0 is on: %d\n", core_is_on));
-
 	cache->counter_src0 = counter;
 
 	if (MALI_HW_CORE_NO_COUNTER != counter)

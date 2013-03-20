@@ -504,6 +504,10 @@ static int mdm_subsys_shutdown(const struct subsys_data *crashed_subsys)
 		 */
 		msleep(mdm_drv->pdata->ramdump_delay_ms);
 	}
+
+	/* close silent log */
+	silent_log_panic_handler();
+
 	#if 0
 	if (!mdm_drv->mdm_unexpected_reset_occurred)
 		mdm_drv->ops->reset_mdm_cb(mdm_drv);

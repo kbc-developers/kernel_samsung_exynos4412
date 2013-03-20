@@ -595,7 +595,9 @@ _mali_osk_errcode_t _mali_ukk_attach_ump_mem( _mali_uk_attach_ump_mem_s *args )
 	descriptor->mali_address = args->mali_address;
 	descriptor->mali_addr_mapping_info = (void*)session_data;
 	descriptor->process_addr_mapping_info = NULL; /* do not map to process address space */
+	descriptor->cache_settings = (u32) MALI_CACHE_STANDARD;
 	descriptor->lock = session_data->memory_lock;
+
 	if (args->flags & _MALI_MAP_EXTERNAL_MAP_GUARD_PAGE)
 	{
 		descriptor->flags = MALI_MEMORY_ALLOCATION_FLAG_MAP_GUARD_PAGE;
@@ -806,6 +808,7 @@ _mali_osk_errcode_t _mali_ukk_map_external_mem( _mali_uk_map_external_mem_s *arg
 	descriptor->mali_address = args->mali_address;
 	descriptor->mali_addr_mapping_info = (void*)session_data;
 	descriptor->process_addr_mapping_info = NULL; /* do not map to process address space */
+	descriptor->cache_settings = (u32)MALI_CACHE_STANDARD;
 	descriptor->lock = session_data->memory_lock;
 	if (args->flags & _MALI_MAP_EXTERNAL_MAP_GUARD_PAGE)
 	{
@@ -941,7 +944,7 @@ static _mali_osk_errcode_t mali_address_manager_map(mali_memory_allocation * des
 
 	MALI_DEBUG_PRINT(7, ("Mali map: mapping 0x%08X to Mali address 0x%08X length 0x%08X\n", *phys_addr, mali_address, size));
 
-	mali_mmu_pagedir_update(session_data->page_directory, mali_address, *phys_addr, size);
+	mali_mmu_pagedir_update(session_data->page_directory, mali_address, *phys_addr, size, descriptor->cache_settings);
 
 	MALI_SUCCESS;
 }
@@ -970,6 +973,7 @@ _mali_osk_errcode_t _mali_ukk_mem_mmap( _mali_uk_mem_mmap_s *args )
 
 	descriptor->process_addr_mapping_info = args->ukk_private; /* save to be used during physical manager callback */
 	descriptor->flags = MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE;
+	descriptor->cache_settings = (u32) args->cache_settings ;
 	descriptor->lock = session_data->memory_lock;
 	_mali_osk_list_init( &descriptor->list );
 

@@ -1206,7 +1206,7 @@ static void start_unlink_async (struct ehci_hcd *ehci, struct ehci_qh *qh)
 	int		cmd = ehci_readl(ehci, &ehci->regs->command);
 	struct ehci_qh	*prev;
 
-#ifdef DEBUG
+#if 0 /* DEBUG */
 	assert_spin_locked(&ehci->lock);
 	if (ehci->reclaim
 			|| (qh->qh_state != QH_STATE_LINKED

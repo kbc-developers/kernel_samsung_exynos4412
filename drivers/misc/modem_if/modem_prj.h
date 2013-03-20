@@ -742,28 +742,6 @@ extern void set_sromc_access(bool access);
 #if defined(CONFIG_TDSCDMA_MODEM_SPRD8803) && defined(CONFIG_LINK_DEVICE_SPI)
 extern int spi_sema_init(void);
 extern int sprd_boot_done;
-struct ipc_spi {
-	struct class *class;
-	struct device *dev;
-	struct cdev cdev;
-	dev_t devid;
-
-	wait_queue_head_t waitq;
-	struct fasync_struct *async_queue;
-	u32 mailbox;
-
-	unsigned long base;
-	unsigned long size;
-	void __iomem *mmio;
-
-	int irq;
-
-	struct completion comp;
-	atomic_t ref_sem;
-	unsigned long flags;
-
-	const struct attribute_group *group;
-};
 #endif
 
 #endif

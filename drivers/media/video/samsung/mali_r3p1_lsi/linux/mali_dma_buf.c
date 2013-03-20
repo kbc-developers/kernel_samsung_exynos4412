@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
+ * Copyright (C) 2012 ARM Limited. All rights reserved.
  * 
  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
@@ -126,6 +126,7 @@ static void mali_dma_buf_release(void *ctx, void *handle)
 static mali_physical_memory_allocation_result mali_dma_buf_commit(void* ctx, mali_allocation_engine * engine, mali_memory_allocation * descriptor, u32* offset, mali_physical_memory_allocation * alloc_info)
 {
 	struct mali_session_data *session;
+	struct mali_page_directory *pagedir;
 	struct mali_dma_buf_attachment *mem;
 	struct scatterlist *sg;
 	int i;
@@ -142,6 +143,7 @@ static mali_physical_memory_allocation_result mali_dma_buf_commit(void* ctx, mal
 
 	virt = descriptor->mali_address;
 	session = (struct mali_session_data *)descriptor->mali_addr_mapping_info;
+	pagedir = mali_session_get_page_directory(session);
 
 	MALI_DEBUG_ASSERT_POINTER(session);
 
@@ -164,16 +166,10 @@ static mali_physical_memory_allocation_result mali_dma_buf_commit(void* ctx, mal
 		/* sg must be page aligned. */
 		MALI_DEBUG_ASSERT(0 == size % MALI_MMU_PAGE_SIZE);
 
-		while(0 != size)
-		{
-			mali_mmu_pagedir_update(mali_session_get_page_directory(session), virt, phys, size);
+		mali_mmu_pagedir_update(pagedir, virt, phys, size, MALI_CACHE_STANDARD);
 
-			virt += MALI_MMU_PAGE_SIZE;
-			phys += MALI_MMU_PAGE_SIZE;
-			size -= MALI_MMU_PAGE_SIZE;
-
-			*offset += MALI_MMU_PAGE_SIZE;
-		}
+		virt += size;
+		*offset += size;
 	}
 
 	if (descriptor->flags & MALI_MEMORY_ALLOCATION_FLAG_MAP_GUARD_PAGE)
@@ -182,7 +178,7 @@ static mali_physical_memory_allocation_result mali_dma_buf_commit(void* ctx, mal
 		MALI_DEBUG_PRINT(7, ("Mapping in extra guard page\n"));
 
 		guard_phys = sg_dma_address(mem->sgt->sgl);
-		mali_mmu_pagedir_update(mali_session_get_page_directory(session), virt, guard_phys, MALI_MMU_PAGE_SIZE);
+		mali_mmu_pagedir_update(mali_session_get_page_directory(session), virt, guard_phys, MALI_MMU_PAGE_SIZE, MALI_CACHE_STANDARD);
 	}
 
 	MALI_DEBUG_ASSERT(*offset == descriptor->size);

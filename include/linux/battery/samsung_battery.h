@@ -176,14 +176,16 @@ struct battery_info {
 	bool errortest_stopcharging;
 #endif
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
-	bool is_unspec_phase;
-	bool is_unspec_recovery;
+	/* previous state */
 	unsigned int prev_cable_type;
 	unsigned int prev_battery_health;
 	unsigned int prev_charge_virt_state;
 	unsigned int prev_battery_soc;
 	struct wake_lock update_wake_lock;
+
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
+	bool is_unspec_phase;
+	bool is_unspec_recovery;
 #endif
 };
 
@@ -191,9 +193,7 @@ struct battery_info {
 extern bool is_jig_attached;
 
 /* charger detect source */
-#if defined(CONFIG_MACH_C1_KOR_SKT) || \
-	defined(CONFIG_MACH_C1_KOR_KT) || defined(CONFIG_MACH_C1_KOR_LGT) || \
-	defined(CONFIG_MACH_BAFFIN)
+#if defined(CONFIG_MACH_BAFFIN)
 #undef USE_CHGIN_INTR
 #else
 #define USE_CHGIN_INTR
@@ -276,11 +276,7 @@ enum status_full_type {
 
 /* WORKAROUND: define audio dock current */
 #define DOCK_TYPE_AUDIO_CURR		1000
-#if defined(CONFIG_MACH_T0)
 #define DOCK_TYPE_SMART_NOTG_CURR	1700
-#else
-#define DOCK_TYPE_SMART_NOTG_CURR	1000
-#endif
 #define DOCK_TYPE_SMART_OTG_CURR	1000
 #define DOCK_TYPE_LOW_CURR		475
 

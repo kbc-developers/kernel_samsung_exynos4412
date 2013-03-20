@@ -1641,6 +1641,10 @@ static int autosuspend_check(struct usb_device *udev)
 		for (i = 0; i < udev->actconfig->desc.bNumInterfaces; i++) {
 			intf = udev->actconfig->interface[i];
 
+			//null check
+			if(intf == NULL)
+				continue;
+
 			/* We don't need to check interfaces that are
 			 * disabled for runtime PM.  Either they are unbound
 			 * or else their drivers don't support autosuspend

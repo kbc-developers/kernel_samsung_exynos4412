@@ -391,7 +391,7 @@ static int s5k6a3_power_on(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_CAM_IO_EN_R1, 1);
 	else
-	ret = gpio_direction_output(GPIO_CAM_IO_EN, 1);
+		ret = gpio_direction_output(GPIO_CAM_IO_EN, 1);
 #else
 	ret = gpio_direction_output(GPIO_CAM_IO_EN, 1);
 #endif
@@ -484,7 +484,7 @@ static int s5k6a3_power_down(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_CAM_IO_EN_R1, 0);
 	else
-	ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
+		ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
 #else
 	ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
 #endif
@@ -764,7 +764,7 @@ static int s5c73m3_gpio_request(void)
 
 #if defined(CONFIG_MACH_M3_JPN_DCM)
 	if (system_rev < 3)
-		ret = gpio_request(GPIO_CAM_AF_EN_R1, "GPM1");
+		ret = gpio_request(GPIO_CAM_AF_EN_R1, "GPM0");
 	else
 		ret = gpio_request(GPIO_CAM_AF_EN, "GPM0");
 #else
@@ -813,15 +813,15 @@ static void s5c73m3_gpio_free(void)
 		gpio_free(GPIO_ISP_CORE_EN_R1);
 	} else {
 		gpio_free(GPIO_ISP_STANDBY);
-		gpio_free(GPIO_ISP_RESET);
 		gpio_free(GPIO_CAM_IO_EN);
+		gpio_free(GPIO_ISP_RESET);
 		gpio_free(GPIO_CAM_AF_EN);
 		gpio_free(GPIO_ISP_CORE_EN);
 	}
 #else
 	gpio_free(GPIO_ISP_STANDBY);
-	gpio_free(GPIO_ISP_RESET);
 	gpio_free(GPIO_CAM_IO_EN);
+	gpio_free(GPIO_ISP_RESET);
 	gpio_free(GPIO_CAM_AF_EN);
 	gpio_free(GPIO_ISP_CORE_EN);
 #endif
@@ -1059,7 +1059,7 @@ static int s5c73m3_power_down(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_CAM_IO_EN_R1, 0);
 	else
-	ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
+		ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
 #else
 		ret = gpio_direction_output(GPIO_CAM_IO_EN, 0);
 #endif
@@ -1236,7 +1236,7 @@ static int m5mo_power_on(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_ISP_CORE_EN_R1, 1);
 	else
-	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
+		ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #else
 	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #endif
@@ -1338,7 +1338,7 @@ static int m5mo_power_on(void)
 	if (system_rev < 3)
 		gpio_free(GPIO_ISP_CORE_EN_R1);
 	else
-	gpio_free(GPIO_ISP_CORE_EN);
+		gpio_free(GPIO_ISP_CORE_EN);
 #else
 	gpio_free(GPIO_ISP_CORE_EN);
 #endif
@@ -1625,7 +1625,7 @@ static int m9mo_power_on(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_ISP_CORE_EN_R1, 1);
 	else
-	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
+		ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #else
 	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #endif
@@ -1694,7 +1694,7 @@ static int m9mo_power_on(void)
 	if (system_rev < 3)
 		gpio_free(GPIO_ISP_CORE_EN_R1);
 	else
-	gpio_free(GPIO_ISP_CORE_EN);
+		gpio_free(GPIO_ISP_CORE_EN);
 #else
 	gpio_free(GPIO_ISP_CORE_EN);
 #endif
@@ -1825,7 +1825,7 @@ static int m9mo_power_down(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_ISP_CORE_EN_R1, 0);
 	else
-	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
+		ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
 #else
 	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
 #endif
@@ -3028,7 +3028,7 @@ static int sr200pc20m_power_on(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_ISP_CORE_EN_R1, 1);
 	else
-	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
+		ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #else
 	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 1);
 #endif
@@ -3106,7 +3106,7 @@ static int sr200pc20m_power_on(void)
 	if (system_rev < 3)
 		gpio_free(GPIO_ISP_CORE_EN_R1);
 	else
-	gpio_free(GPIO_ISP_CORE_EN);
+		gpio_free(GPIO_ISP_CORE_EN);
 #else
 	gpio_free(GPIO_ISP_CORE_EN);
 #endif
@@ -3184,7 +3184,7 @@ static int sr200pc20m_power_off(void)
 	if (system_rev < 3)
 		ret = gpio_direction_output(GPIO_ISP_CORE_EN_R1, 0);
 	else
-	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
+		ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
 #else
 	ret = gpio_direction_output(GPIO_ISP_CORE_EN, 0);
 #endif
@@ -3234,7 +3234,7 @@ static int sr200pc20m_power_off(void)
 	if (system_rev < 3)
 		gpio_free(GPIO_ISP_CORE_EN_R1);
 	else
-	gpio_free(GPIO_ISP_CORE_EN);
+		gpio_free(GPIO_ISP_CORE_EN);
 #else
 	gpio_free(GPIO_ISP_CORE_EN);
 #endif

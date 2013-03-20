@@ -48,6 +48,7 @@ struct rmnet_ctrl_dev {
 	unsigned		is_opened;
 
 	bool			is_connected;
+	bool			rx_stop_by_close;
 
 	/*input control lines (DSR, CTS, CD, RI)*/
 	unsigned int		cbits_tolocal;
