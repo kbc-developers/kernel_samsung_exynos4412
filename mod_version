@@ -1,4 +1,9 @@
 ###########################################################
+# set android version
+###########################################################
+ANDROID_VERSION=JB
+
+###########################################################
 # don't edit this file
 ###########################################################
 # release build
@@ -10,7 +15,7 @@ if [ ! "$RELEASE_BUILD" = 'y' ]; then
     export KBUILD_BUILD_VERSION="$BUILD_NUMBER"
   fi
 fi
-export BUILD_LOCALVERSION="$TARGET_DEVICE-$BUILD_MOD-$BUILD_VERSION-$BUILD_TARGET"
+export BUILD_LOCALVERSION="$TARGET_DEVICE-$ANDROID_VERSION-$BUILD_MOD-$BUILD_VERSION-$BUILD_TARGET"
 
 # kernel vesion
 KERNEL_VERSION=`grep '^VERSION = ' ./Makefile | cut -d' ' -f3`

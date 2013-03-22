@@ -24,7 +24,7 @@ export LOCALVERSION="-$BUILD_LOCALVERSION"
 
 echo ""
 echo "====================================================================="
-echo "    BUILD START (KERNELVERSION $BUILD_KERNELVERSION-$BUILD_LOCALVERSION)"
+echo "    BUILD START (KERNEL VERSION $BUILD_KERNELVERSION-$BUILD_LOCALVERSION)"
 echo "====================================================================="
 
 if [ ! -n "$1" ]; then
