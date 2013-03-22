@@ -86,8 +86,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#include <linux/cpufreq_slp.h>
-
 /*
  * Convert user-nice values [ -20 ... 0 ... 19 ]
  * to static priority [ MAX_RT_PRIO..MAX_PRIO-1 ],
@@ -4290,8 +4288,6 @@ need_resched:
 		rq->nr_switches++;
 		rq->curr = next;
 		++*switch_count;
-
-		slp_store_task_history(cpu, prev);
 
 		context_switch(rq, prev, next); /* unlocks the rq */
 		/*
