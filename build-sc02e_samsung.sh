@@ -3,4 +3,4 @@
 export BUILD_TARGET=SAM
 . sc02e.config
 
-./_build.sh $1
+time ./_build-bootimg.sh $1
