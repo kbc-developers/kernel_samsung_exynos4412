@@ -533,7 +533,7 @@ static _mali_osk_errcode_t enable_mali_clocks(void)
 	/* lock/unlock CPU freq by Mali */
 	if (mali_gpu_clk >= 533)
 		err = cpufreq_lock_by_mali(1400);
-	else if (mali_gpu_clk == 440)
+	else if (mali_gpu_clk >= 440)
 		err = cpufreq_lock_by_mali(1200);
 #else
 	mali_regulator_set_voltage(mali_runtime_resume.vol, mali_runtime_resume.vol);
