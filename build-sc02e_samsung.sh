@@ -1,3 +1,6 @@
 #!/bin/bash
 
-./_build.sh "SC02ESAM" $1 $2
+export BUILD_TARGET=SAM
+. sc02e.config
+
+./_build.sh $1

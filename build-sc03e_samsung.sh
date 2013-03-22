@@ -1,3 +1,6 @@
 #!/bin/bash
 
-./_build.sh "SC03ESAM" $1 $2
+export BUILD_TARGET=SAM
+. sc03e.config
+
+time ./_build-bootimg.sh $1
