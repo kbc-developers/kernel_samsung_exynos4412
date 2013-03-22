@@ -1131,8 +1131,6 @@ config IRON_BD
 config GRANDE_BD
 	bool "Grande common Board"
 
-source "arch/arm/mach-exynos/Kconfig.slp"
-
 config WRITEBACK_ENABLED
 	bool "Samsung Writeback Enable"
 	help
