@@ -1177,7 +1177,7 @@ void __init vmalloc_init(void)
 		va->flags = VM_VM_AREA;
 		va->va_start = (unsigned long)tmp->addr;
 		va->va_end = va->va_start + tmp->size;
-                va->vm = tmp;
+		va->vm = tmp;
 		__insert_vmap_area(va);
 	}
 
