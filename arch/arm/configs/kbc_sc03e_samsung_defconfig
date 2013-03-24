@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.31 Kernel Configuration
+# Linux/arm 3.0.64 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -599,6 +599,9 @@ CONFIG_ARM_ERRATA_761320=y
 # CONFIG_ARM_ERRATA_761171 is not set
 # CONFIG_ARM_ERRATA_762974 is not set
 # CONFIG_ARM_ERRATA_763722 is not set
+CONFIG_ARM_ERRATA_764369=y
+# CONFIG_PL310_ERRATA_769419 is not set
+# CONFIG_ARM_ERRATA_775420 is not set
 CONFIG_ARM_GIC=y
 CONFIG_PL330=y
 # CONFIG_FIQ_DEBUGGER is not set
@@ -609,8 +612,6 @@ CONFIG_PL330=y
 # CONFIG_PCI_SYSCALL is not set
 # CONFIG_ARCH_SUPPORTS_MSI is not set
 # CONFIG_PCCARD is not set
-CONFIG_ARM_ERRATA_764369=y
-# CONFIG_PL310_ERRATA_769419 is not set
 
 #
 # Kernel Features
@@ -2521,7 +2522,6 @@ CONFIG_USB_STORAGE=y
 # CONFIG_USB_STORAGE_KARMA is not set
 # CONFIG_USB_STORAGE_CYPRESS_ATACB is not set
 # CONFIG_USB_STORAGE_ENE_UB6250 is not set
-# CONFIG_USB_UAS is not set
 # CONFIG_USB_LIBUSUAL is not set
 
 #
