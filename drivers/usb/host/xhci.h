@@ -1070,6 +1070,9 @@ union xhci_trb {
 #define TRB_MFINDEX_WRAP	39
 /* TRB IDs 40-47 reserved, 48-63 is vendor-defined */
 
+#define TRB_TYPE_LINK_LE32(x)   (((x) & cpu_to_le32(TRB_TYPE_BITMASK)) == \
+		cpu_to_le32(TRB_TYPE(TRB_LINK)))
+
 /* Nec vendor-specific command completion event. */
 #define	TRB_NEC_CMD_COMP	48
 /* Get NEC firmware revision. */
@@ -1109,6 +1112,16 @@ struct xhci_td {
 	struct xhci_segment	*start_seg;
 	union xhci_trb		*first_trb;
 	union xhci_trb		*last_trb;
+};
+
+/* xHCI command default timeout value */
+#define XHCI_CMD_DEFAULT_TIMEOUT       (5 * HZ)
+
+/* command descriptor */
+struct xhci_cd {
+	struct list_head	cancel_cmd_list;
+	struct xhci_command	*command;
+	union xhci_trb		*cmd_trb;
 };
 
 struct xhci_dequeue_state {
