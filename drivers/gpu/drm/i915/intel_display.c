@@ -8731,7 +8731,7 @@ static void ironlake_teardown_rc6(struct drm_device *dev)
 		dev_priv->pwrctx = NULL;
 	}
 
-        gen7_setup_fixed_func_scheduler(dev_priv);
+	gen7_setup_fixed_func_scheduler(dev_priv);
 }
 
 static void ironlake_disable_rc6(struct drm_device *dev)

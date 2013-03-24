@@ -244,11 +244,6 @@ struct dip_infoframe {
 			uint16_t left_bar_end;
 			uint16_t right_bar_start;
 		} __attribute__ ((packed)) avi;
-		struct {
-			uint8_t vn[8];
-			uint8_t pd[16];
-			uint8_t sdi;
-		} spd;
 		uint8_t payload[27];
 	} __attribute__ ((packed)) body;
 } __attribute__((packed));

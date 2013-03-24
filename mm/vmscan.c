@@ -735,7 +735,7 @@ static enum page_references page_check_references(struct page *page,
 
 		/*
 		 * Activate file-backed executable pages after first usage.
-		 */
+		*/
 		if (vm_flags & VM_EXEC)
 			return PAGEREF_ACTIVATE;
 #endif
