@@ -709,8 +709,12 @@ static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 		reg1 = 1;
 		reg2 = idx;
 
-		__asm__ volatile ("smc    0\n" : "+r" (reg0), "+r"(reg1),
-				  "+r"(reg2), "+r"(reg3)
+		__asm__ volatile (
+#ifdef REQUIRES_SEC
+			".arch_extension sec\n"
+#endif
+			"smc    0\n" : "+r" (reg0), "+r"(reg1),
+				"+r"(reg2), "+r"(reg3)
 		    );
 		if (reg1)
 			return -1;
@@ -720,8 +724,12 @@ static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 	reg1 = 1;
 	reg2 = idx;
 
-	__asm__ volatile ("smc    0\n" : "+r" (reg0), "+r"(reg1),
-		"+r"(reg2),  "+r"(reg3)
+	__asm__ volatile (
+#ifdef REQUIRES_SEC
+		".arch_extension sec\n"
+#endif
+		"smc    0\n" : "+r" (reg0), "+r"(reg1),
+			"+r"(reg2),  "+r"(reg3)
 	    );
 	if (reg1)
 		return -1;
