@@ -947,6 +947,35 @@ struct platform_device sec_device_thermistor = {
 };
 #endif
 
+#ifdef CONFIG_SEC_SUBTHERMISTOR
+static struct sec_therm_adc_table subtemper_table_ap[] = {
+	{ 345,   600 },
+	{ 390,   520 },
+	{ 410,   500 },
+	{ 698,   400 },
+	{ 898,   300 },
+	{ 1132,  200 },
+	{ 1363,  100 },
+	{ 1574,    0 },
+	{ 1732, -100 },
+	{ 1860, -200 },
+};
+
+static struct sec_therm_platform_data sec_subtherm_pdata = {
+	.adc_channel	= 3,
+	.adc_arr_size	= ARRAY_SIZE(subtemper_table_ap),
+	.adc_table	= subtemper_table_ap,
+	.polling_interval = 20 * 1000, /* msecs */
+	.get_siop_level = NULL,
+};
+
+struct platform_device sec_device_subthermistor = {
+	.name = "sec-subthermistor",
+	.id = -1,
+	.dev.platform_data = &sec_subtherm_pdata,
+};
+#endif
+
 #ifdef CONFIG_STMPE811_ADC
 /* temperature table for ADC ch7 */
 static struct adc_table_data temper_table_battery[] = {

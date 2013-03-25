@@ -12,7 +12,7 @@
  *  GNU General Public License for more details.
  *
  */
-#include "../ssp.h"
+#include "ssp.h"
 
 #define	VENDOR		"CAPELLA"
 #define	CHIP_ID		"CM36651"
@@ -68,7 +68,10 @@ static struct device_attribute *light_attrs[] = {
 
 void initialize_light_factorytest(struct ssp_data *data)
 {
-	struct device *light_device = NULL;
+	sensors_register(data->light_device, data, light_attrs, "light_sensor");
+}
 
-	sensors_register(light_device, data, light_attrs, "light_sensor");
+void remove_light_factorytest(struct ssp_data *data)
+{
+	sensors_unregister(data->light_device, light_attrs);
 }

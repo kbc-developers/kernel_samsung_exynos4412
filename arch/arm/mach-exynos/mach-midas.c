@@ -959,7 +959,8 @@ static void motor_en(bool enable)
 	       gpio_get_value(EXYNOS4_GPD0(0)));
 }
 #endif
-#if defined(CONFIG_MACH_T0) && defined(CONFIG_TARGET_LOCALE_KOR)
+#if defined(CONFIG_MACH_T0) && defined(CONFIG_TARGET_LOCALE_KOR) || \
+	defined(CONFIG_MACH_T0_JPN_LTE_DCM)
 static void motor_en(bool enable)
 {
 	gpio_direction_output(EXYNOS4_GPC0(3), enable);
@@ -1135,7 +1136,7 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 		I2C_BOARD_INFO("s5p_ddc", (0x74 >> 1)),
 	},
 };
-#elif !defined(CONFIG_MACH_T0_EUR_OPEN) || !defined(CONFIG_MACH_T0_CHN_OPEN)
+#elif !defined(CONFIG_MACH_T0_EUR_OPEN) && !defined(CONFIG_MACH_T0_CHN_OPEN)
 static struct i2c_board_info i2c_devs5[] __initdata = {
 #ifdef CONFIG_REGULATOR_MAX8997
 	{
@@ -1608,7 +1609,7 @@ static struct samsung_battery_platform_data samsung_battery_pdata = {
 	.freeze_recovery_temp = 30,
 #elif defined(CONFIG_MACH_T0_KOR_SKT) || defined(CONFIG_MACH_T0_KOR_KT) || \
 	defined(CONFIG_MACH_T0_KOR_LGT)
-	.overheat_stop_temp = 650,
+	.overheat_stop_temp = 660,
 	.overheat_recovery_temp = 425,
 	.freeze_stop_temp = -45,
 	.freeze_recovery_temp = 3,
@@ -1639,16 +1640,21 @@ static struct samsung_battery_platform_data samsung_battery_pdata = {
 	.overheat_recovery_temp = 440,
 	.freeze_stop_temp = -50,
 	.freeze_recovery_temp = 0,
-#elif defined(CONFIG_MACH_T0_USA_SPR)
-	.overheat_stop_temp = 485,
-	.overheat_recovery_temp = 409,
-	.freeze_stop_temp = -50,
-	.freeze_recovery_temp = 0,
-#elif defined(CONFIG_MACH_T0_USA_USCC)
-	.overheat_stop_temp = 600,
+#elif defined(CONFIG_MACH_T0_USA_TMO)
+	.overheat_stop_temp = 475,
 	.overheat_recovery_temp = 400,
 	.freeze_stop_temp = -50,
 	.freeze_recovery_temp = 0,
+#elif defined(CONFIG_MACH_T0_USA_SPR)
+	.overheat_stop_temp = 515,
+	.overheat_recovery_temp = 420,
+	.freeze_stop_temp = -80,
+	.freeze_recovery_temp = -10,
+#elif defined(CONFIG_MACH_T0_USA_USCC)
+	.overheat_stop_temp = 630,
+	.overheat_recovery_temp = 420,
+	.freeze_stop_temp = -50,
+	.freeze_recovery_temp = 30,
 #else
 	/* USA default */
 	.overheat_stop_temp = 450,
@@ -1657,14 +1663,21 @@ static struct samsung_battery_platform_data samsung_battery_pdata = {
 	.freeze_recovery_temp = 0,
 #endif
 #elif defined(CONFIG_MACH_M0_CTC)
+#if defined(CONFIG_MACH_M0_DUOSCTC)
+	.overheat_stop_temp = 640,
+	.overheat_recovery_temp = 440,
+	.freeze_stop_temp = -40,
+	.freeze_recovery_temp = 20,
+#else
 	.overheat_stop_temp = 640,
 	.overheat_recovery_temp = 430,
 	.freeze_stop_temp = -50,
 	.freeze_recovery_temp = 30,
+#endif
 #elif defined(CONFIG_MACH_GC1)
 	.overheat_stop_temp = 600,
 	.overheat_recovery_temp = 400,
-	.freeze_stop_temp = -30,
+	.freeze_stop_temp = -50,
 	.freeze_recovery_temp = 0,
 #else
 	/* M0 EUR */
@@ -2885,15 +2898,15 @@ static void felica_setup(void)
 		s3c_gpio_setpull(FELICA_GPIO_I2C_SCL_R1, S3C_GPIO_PULL_DOWN);
 		gpio_free(FELICA_GPIO_I2C_SCL_R1);
 	} else {
-	/* I2C SDA GPY2[4] */
-	gpio_request(FELICA_GPIO_I2C_SDA, FELICA_GPIO_I2C_SDA_NAME);
-	s3c_gpio_setpull(FELICA_GPIO_I2C_SDA, S3C_GPIO_PULL_DOWN);
-	gpio_free(FELICA_GPIO_I2C_SDA);
+		/* I2C SDA GPY2[4] */
+		gpio_request(FELICA_GPIO_I2C_SDA, FELICA_GPIO_I2C_SDA_NAME);
+		s3c_gpio_setpull(FELICA_GPIO_I2C_SDA, S3C_GPIO_PULL_DOWN);
+		gpio_free(FELICA_GPIO_I2C_SDA);
 
-	/* I2C SCL GPY2[5] */
-	gpio_request(FELICA_GPIO_I2C_SCL, FELICA_GPIO_I2C_SCL_NAME);
-	s3c_gpio_setpull(FELICA_GPIO_I2C_SCL, S3C_GPIO_PULL_DOWN);
-	gpio_free(FELICA_GPIO_I2C_SCL);
+		/* I2C SCL GPY2[5] */
+		gpio_request(FELICA_GPIO_I2C_SCL, FELICA_GPIO_I2C_SCL_NAME);
+		s3c_gpio_setpull(FELICA_GPIO_I2C_SCL, S3C_GPIO_PULL_DOWN);
+		gpio_free(FELICA_GPIO_I2C_SCL);
 	}
 #elif defined(CONFIG_MACH_T0_JPN_LTE_DCM)
 	/* I2C SDA GPY2[4] */
@@ -3090,7 +3103,8 @@ static void __init midas_machine_init(void)
 	if (system_rev >= 9)
 		max77693_haptic_pdata.motor_en = motor_en;
 #endif
-#if defined(CONFIG_MACH_BAFFIN)
+#if defined(CONFIG_MACH_T0_JPN_LTE_DCM)
+	if (system_rev >= 12)
 		max77693_haptic_pdata.motor_en = motor_en;
 #endif
 	i2c_register_board_info(17, i2c_devs17_emul,
@@ -3260,6 +3274,9 @@ static void __init midas_machine_init(void)
 #endif
 #ifdef CONFIG_SEC_THERMISTOR
 	platform_device_register(&sec_device_thermistor);
+#endif
+#ifdef CONFIG_SEC_SUBTHERMISTOR
+	platform_device_register(&sec_device_subthermistor);
 #endif
 #if defined(CONFIG_MACH_M0_CTC)
 	midas_gpiokeys_platform_data.buttons = m0_buttons;
@@ -3474,11 +3491,36 @@ static void __init exynos4_reserve(void)
 		CONFIG_VIDEO_SAMSUNG_MEMSIZE_FIMC1 * SZ_1K, 0x65800000, 0);
 	if (ret != 0)
 		panic("alloc failed for FIMC1\n");
+	else {
+		static struct cma_region fimc_reg = {
+			.name = "fimc1",
+			.size = CONFIG_VIDEO_SAMSUNG_MEMSIZE_FIMC1 * SZ_1K,
+			.start = 0x65800000,
+			.reserved = 1,
+		};
+		
+		if (cma_early_region_register(&fimc_reg))
+			pr_err("S5P/CMA: Failed to register '%s'\n",
+				fimc_reg.name);
+	}
 #endif
 
 #if defined(CONFIG_USE_MFC_CMA) && defined(CONFIG_MACH_M0)
 	ret = dma_declare_contiguous(&s5p_device_mfc.dev,
 			0x02800000, 0x5C800000, 0);
+
+	if (ret == 0) {
+		static struct cma_region mfc_reg = {
+			.name = "mfc",
+			.size = 0x02800000,
+			.start = 0x5C800000,
+			.reserved = 1,
+		};
+
+		if (cma_early_region_register(&mfc_reg))
+			pr_err("S5P/CMA: Failed to register '%s'\n",
+				mfc_reg.name);
+	}
 #endif
 	if (ret != 0)
 		printk(KERN_ERR "%s Fail\n", __func__);

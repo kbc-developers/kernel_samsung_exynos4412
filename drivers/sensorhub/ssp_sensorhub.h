@@ -47,7 +47,7 @@ struct ssp_sensorhub_data {
 	struct completion transfer_done;
 	struct task_struct *sensorhub_task;
 	struct sensorhub_event events_head;
-	struct sensorhub_event events[LIBRARY_MAX_NUM + 1];
+	struct sensorhub_event events[LIBRARY_MAX_NUM];
 	struct sensorhub_event *first_event;
 	int event_number;
 	int transfer_try;

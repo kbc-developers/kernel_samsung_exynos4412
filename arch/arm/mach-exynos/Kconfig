@@ -633,6 +633,15 @@ config SEC_THERMISTOR
 	 U1 has two thermistors. this device driver use one of those
 	 to check system temperature.
 
+config SEC_SUBTHERMISTOR
+	bool "Use sub thermistor"
+	depends on SAMSUNG_DEV_ADC
+	default n
+	help
+	  Use sub thermistor driver.
+	  This device driver use only Japan model.
+	  Japan model has sub thermistors.
+
 config EXYNOS_SYSREG_PM
 	bool "PM Support for System Registers"
 	depends on CPU_EXYNOS4210 || CPU_EXYNOS4412 || CPU_EXYNOS4212

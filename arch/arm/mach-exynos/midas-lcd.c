@@ -572,8 +572,8 @@ static struct s3cfb_lcd s6evr02 = {
 	.name = "s6evr02",
 	.height = 1280,
 	.width = 720,
-	.p_width = 74,
-	.p_height = 131,
+	.p_width = 69,
+	.p_height = 123,
 	.bpp = 24,
 	.freq = 58,
 	.freq_limit = 41,
@@ -611,10 +611,10 @@ static struct s3cfb_lcd ea8061 = {
 	.name = "ea8061",
 	.height = 1280,
 	.width = 720,
-	.p_width = 64,
-	.p_height = 106,
+	.p_width = 69,
+	.p_height = 123,
 	.bpp = 24,
-	.freq = 60,
+	.freq = 58,
 
 	/* minumun value is 0 except for wr_act time. */
 	.cpu_timing = {
@@ -626,7 +626,7 @@ static struct s3cfb_lcd ea8061 = {
 
 	.timing = {
 		.h_fp = 52,
-		.h_bp = 96,
+		.h_bp = 121,
 		.h_sw = 4,
 		.v_fp = 13,
 		.v_fpe = 1,
@@ -835,9 +835,11 @@ static void lcd_cfg_gpio(void)
 	s3c_gpio_cfgpin(GPIO_MLCD_RST, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_MLCD_RST, S3C_GPIO_PULL_NONE);
 
+#if defined(GPIO_LCD_22V_EN_00)
 	/* LCD_EN */
 	s3c_gpio_cfgpin(GPIO_LCD_22V_EN_00, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_LCD_22V_EN_00, S3C_GPIO_PULL_NONE);
+#endif
 
 	return;
 }
@@ -915,15 +917,18 @@ static int lcd_power_on(void *ld, int enable)
 		return -EPERM;
 	}
 
+#if defined(GPIO_LCD_22V_EN_00)
 	err = gpio_request(GPIO_LCD_22V_EN_00, "LCD_EN");
 	if (err) {
 		printk(KERN_ERR "failed to request GPM4[4] for "
 			"LCD_2.2V_EN control\n");
 		return -EPERM;
 	}
-
+#endif
 	if (enable) {
+#if defined(GPIO_LCD_22V_EN_00)
 		gpio_set_value(GPIO_LCD_22V_EN_00, GPIO_LEVEL_HIGH);
+#endif
 
 #if defined(CONFIG_MACH_T0)
 		regulator = regulator_get(NULL, "vcc_1.8v_lcd");
@@ -971,16 +976,19 @@ static int lcd_power_on(void *ld, int enable)
 			regulator_force_disable(regulator);
 		regulator_put(regulator);
 #endif
+#if defined(GPIO_LCD_22V_EN_00)
 		gpio_set_value(GPIO_LCD_22V_EN_00, GPIO_LEVEL_LOW);
+#endif
 		gpio_set_value(GPIO_MLCD_RST, 0);
 	}
 
 out:
 /* Release GPIO */
 	gpio_free(GPIO_MLCD_RST);
+#if defined(GPIO_LCD_22V_EN_00)
 	gpio_free(GPIO_LCD_22V_EN_00);
-return 0;
-
+#endif
+	return 0;
 }
 #endif
 

@@ -14,11 +14,20 @@
  */
 #include "ssp.h"
 
-#define SSP_FIRMWARE_REVISION		90100
+#if defined(CONFIG_MACH_T0_JPN_LTE_DCM)
+#define SSP_FIRMWARE_REVISION		101800
+#else
+#define SSP_FIRMWARE_REVISION		101200
+#endif
 
 /* Bootload mode cmd */
+#if defined(CONFIG_MACH_T0_JPN_LTE_DCM)
+#define BL_FW_NAME			"ssp_jd.fw"
+#define BL_CRASHED_FW_NAME		"ssp_crashed.fw"
+#else
 #define BL_FW_NAME			"ssp.fw"
 #define BL_CRASHED_FW_NAME		"ssp_crashed.fw"
+#endif
 
 #define APP_SLAVE_ADDR			0x18
 #define BOOTLOADER_SLAVE_ADDR		0x26
@@ -255,7 +264,9 @@ int update_mcu_bin(struct ssp_data *data)
 	data->client->addr = APP_SLAVE_ADDR;
 
 	if (iRet < 0)
-		data->bBinaryChashed = true;
+		data->bSspShutdown = true;
+	else
+		data->bSspShutdown = false;
 
 	return iRet;
 }
@@ -271,7 +282,7 @@ int update_crashed_mcu_bin(struct ssp_data *data)
 	msleep(SSP_SW_RESET_TIME);
 
 	data->client->addr = APP_SLAVE_ADDR;
-	data->bBinaryChashed = true;
+	data->bSspShutdown = true;
 	return iRet;
 }
 

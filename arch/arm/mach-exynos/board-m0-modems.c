@@ -380,7 +380,7 @@ static void umts_modem_cfg_gpio(void)
 	unsigned gpio_ap_dump_int = umts_modem_data.gpio_ap_dump_int;
 	unsigned gpio_flm_uart_sel = umts_modem_data.gpio_flm_uart_sel;
 	unsigned gpio_sim_detect = umts_modem_data.gpio_sim_detect;
-	unsigned irq_phone_active = umts_modem_res[0].start;
+	//unsigned irq_phone_active = umts_modem_res[0].start;
 
 #ifdef CONFIG_SEC_DUAL_MODEM_MODE
 	unsigned gpio_sim_io_sel = umts_modem_data.gpio_sim_io_sel;
@@ -433,7 +433,7 @@ static void umts_modem_cfg_gpio(void)
 			       "PHONE_ACTIVE", err);
 		}
 		gpio_direction_input(gpio_phone_active);
-		pr_err(LOG_TAG "check phone active = %d\n", irq_phone_active);
+		pr_err(LOG_TAG "check phone active = %d\n", gpio_phone_active);
 	}
 
 	if (gpio_sim_detect) {
