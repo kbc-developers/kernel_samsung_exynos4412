@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
+ * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
  * 
  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
@@ -13,61 +13,21 @@
 #include "mali_ukk.h"
 #include "mali_osk.h"
 #include "mali_kernel_common.h"
-#include "mali_kernel_session_manager.h"
+#include "mali_session.h"
 #include "mali_ukk_wrappers.h"
 
 int gp_start_job_wrapper(struct mali_session_data *session_data, _mali_uk_gp_start_job_s __user *uargs)
 {
-    _mali_uk_gp_start_job_s kargs;
-    _mali_osk_errcode_t err;
+	_mali_osk_errcode_t err;
 
-    MALI_CHECK_NON_NULL(uargs, -EINVAL);
-    MALI_CHECK_NON_NULL(session_data, -EINVAL);
+	MALI_CHECK_NON_NULL(uargs, -EINVAL);
+	MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
-	if (!access_ok(VERIFY_WRITE, uargs, sizeof(_mali_uk_gp_start_job_s)))
-	{
-		return -EFAULT;
-	}
+	err = _mali_ukk_gp_start_job(session_data, uargs);
+	if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
-    if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_gp_start_job_s))) return -EFAULT;
-
-    kargs.ctx = session_data;
-    err = _mali_ukk_gp_start_job(&kargs);
-    if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
-
-    kargs.ctx = NULL; /* prevent kernel address to be returned to user space */
-    if (0 != copy_to_user(uargs, &kargs, sizeof(_mali_uk_gp_start_job_s)))
-	{
-		/*
-		 * If this happens, then user space will not know that the job was actually started,
-		 * and if we return a queued job, then user space will still think that one is still queued.
-		 * This will typically lead to a deadlock in user space.
-		 * This could however only happen if user space deliberately passes a user buffer which
-		 * passes the access_ok(VERIFY_WRITE) check, but isn't fully writable at the time of copy_to_user().
-		 * The official Mali driver will never attempt to do that, and kernel space should not be affected.
-		 * That is why we do not bother to do a complex rollback in this very very very rare case.
-		 */
-		return -EFAULT;
-	}
-
-    return 0;
+	return 0;
 }
-
-int gp_abort_job_wrapper(struct mali_session_data *session_data, _mali_uk_gp_abort_job_s __user *uargs)
-{
-    _mali_uk_gp_abort_job_s kargs;
-
-    MALI_CHECK_NON_NULL(uargs, -EINVAL);
-    MALI_CHECK_NON_NULL(session_data, -EINVAL);
-
-    if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_gp_abort_job_s))) return -EFAULT;
-
-    kargs.ctx = session_data;
-    _mali_ukk_gp_abort_job(&kargs);
-
-    return 0;
-}
-
 
 int gp_get_core_version_wrapper(struct mali_session_data *session_data, _mali_uk_get_gp_core_version_s __user *uargs)
 {

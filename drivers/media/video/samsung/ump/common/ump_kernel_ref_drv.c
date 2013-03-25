@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
+ * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
  * 
  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
@@ -95,6 +95,8 @@ UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd
 	mem->release_func = phys_blocks_release;
 	/* For now UMP handles created by ump_dd_handle_create_from_phys_blocks() is forced to be Uncached */
 	mem->is_cached = 0;
+	mem->hw_device = _UMP_UK_USED_BY_CPU;
+	mem->lock_usage = UMP_NOT_LOCKED;
 
 	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
 	DBG_MSG(3, ("UMP memory created. ID: %u, size: %lu\n", mem->secure_id, mem->size_bytes));
@@ -156,8 +158,6 @@ _mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 		 new_allocation->is_cached = 0;
 	else new_allocation->is_cached = 1;
 
-	new_allocation->backend_info = (void*)user_interaction->constraints;
-
 	/* special case a size of 0, we should try to emulate what malloc does in this case, which is to return a valid pointer that must be freed, but can't be dereferences */
 	if (0 == user_interaction->size)
 	{
@@ -165,6 +165,7 @@ _mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 	}
 
 	new_allocation->size_bytes = UMP_SIZE_ALIGN(user_interaction->size); /* Page align the size */
+	new_allocation->lock_usage = UMP_NOT_LOCKED;
 
 	/* Now, ask the active memory backend to do the actual memory allocation */
 	if (!device.backend->allocate( device.backend->ctx, new_allocation ) )
@@ -176,7 +177,7 @@ _mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 		_mali_osk_free(session_memory_element);
 		return _MALI_OSK_ERR_INVALID_FUNC;
 	}
-
+	new_allocation->hw_device = _UMP_UK_USED_BY_CPU;
 	new_allocation->ctx = device.backend->ctx;
 	new_allocation->release_func = device.backend->release;
 
@@ -194,65 +195,3 @@ _mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 
 	return _MALI_OSK_ERR_OK;
 }
-
-UMP_KERNEL_API_EXPORT ump_dd_status_code ump_dd_meminfo_set(ump_dd_handle memh, void* args)
-{
-	ump_dd_mem * mem;
-	ump_secure_id secure_id;
-
-	DEBUG_ASSERT_POINTER(memh);
-
-	secure_id = ump_dd_secure_id_get(memh);
-
-	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	if (0 == ump_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
-	{
-		device.backend->set(mem, args);
-	}
-	else
-	{
-		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		DBG_MSG(1, ("Failed to look up mapping in ump_meminfo_set(). ID: %u\n", (ump_secure_id)secure_id));
-		return UMP_DD_INVALID;
-	}
-
-	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-
-	return UMP_DD_SUCCESS;
-}
-
-UMP_KERNEL_API_EXPORT void *ump_dd_meminfo_get(ump_secure_id secure_id, void* args)
-{
-	ump_dd_mem * mem;
-	void *result;
-
-	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	if (0 == ump_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
-	{
-		result = device.backend->get(mem, args);
-	}
-	else
-	{
-		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		DBG_MSG(1, ("Failed to look up mapping in ump_meminfo_get(). ID: %u\n", (ump_secure_id)secure_id));
-		return UMP_DD_HANDLE_INVALID;
-	}
-
-	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-
-	return result;
-}
-
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_get_from_vaddr(unsigned long vaddr)
-{
-	ump_dd_mem * mem;
-
-	DBG_MSG(5, ("Getting handle from Virtual address. vaddr: %u\n", vaddr));
-
-	_ump_osk_mem_mapregion_get(&mem, vaddr);
-
-	DBG_MSG(1, ("Getting handle's Handle : 0x%8lx\n", mem));
-
-	return (ump_dd_handle)mem;
-}
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
+ * Copyright (C) 2010, 2012 ARM Limited. All rights reserved.
  * 
  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
@@ -17,7 +17,6 @@
 #include "ump_kernel_common.h"
 #include "ump_kernel_memory_backend_os.h"
 #include "ump_kernel_memory_backend_dedicated.h"
-#include "ump_kernel_memory_backend_vcm.h"
 
 /* Configure which dynamic memory allocator to use */
 int ump_backend = ARCH_UMP_BACKEND_DEFAULT;
@@ -57,13 +56,6 @@ ump_memory_backend* ump_memory_backend_create ( void )
 		DBG_MSG(2, ("Using OS memory backend, allocation limit: %d\n", ump_memory_size));
 		backend = ump_os_memory_backend_create(ump_memory_size);
 	}
-#ifdef CONFIG_UMP_VCM_ALLOC
-	else if (2 == ump_backend)
-	{
-		DBG_MSG(2, ("Using VCM memory backend, allocation limit: %d\n", ump_memory_size));
-		backend = ump_vcm_memory_backend_create(ump_memory_size);
-	}
-#endif
 
 	return backend;
 }

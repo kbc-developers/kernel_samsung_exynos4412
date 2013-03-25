@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
+ * Copyright (C) 2010-2012 ARM Limited. All rights reserved.
  * 
  * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
@@ -40,8 +40,6 @@ typedef struct ump_memory_backend
 	u32  (*stat)(struct ump_memory_backend *backend);
 	int  (*pre_allocate_physical_check)(void *ctx, u32 size);
 	u32  (*adjust_to_mali_phys)(void *ctx, u32 cpu_phys);
-	void *(*get)(ump_dd_mem *mem, void *args);
-	void (*set)(ump_dd_mem *mem, void *args);
 	void * ctx;
 } ump_memory_backend;
 
