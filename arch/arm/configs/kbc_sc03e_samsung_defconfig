@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.64 Kernel Configuration
+# Linux/arm 3.0.70 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -422,6 +422,7 @@ CONFIG_BUSFREQ_QOS_NONE=y
 # CONFIG_BUSFREQ_DEBUG is not set
 # CONFIG_BUSFREQ_L2_160M is not set
 CONFIG_SEC_THERMISTOR=y
+# CONFIG_SEC_SUBTHERMISTOR is not set
 # CONFIG_EXYNOS_SYSREG_PM is not set
 CONFIG_ANDROID_WIP=y
 # CONFIG_COMPACTION_RETRY is not set
@@ -2366,6 +2367,7 @@ CONFIG_SND_SOC_USE_EXTERNAL_MIC_BIAS=y
 CONFIG_HID_SUPPORT=y
 CONFIG_HID=y
 # CONFIG_HIDRAW is not set
+# CONFIG_UHID is not set
 
 #
 # USB Input Devices
