@@ -90,9 +90,11 @@ static void sec_reboot(char str, const char *cmd)
 			writel(REBOOT_MODE_PREFIX | REBOOT_MODE_FOTA_BL,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "recovery"))
+#ifdef CONFIG_MACH_T0_JPN_LTE_DCM
 			writel(REBOOT_MODE_PREFIX | REBOOT_MODE_FOTA,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "recovery3e"))
+#endif
 			writel(REBOOT_MODE_PREFIX | REBOOT_MODE_RECOVERY,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "bootloader"))
