@@ -890,6 +890,9 @@ int rmnet_usb_ctrl_probe(struct usb_interface *intf,
 	dev->tx_ctrl_in_req_cnt = 0;
 	dev->tx_block = false;
 
+	/* give margin before send DTR high */
+	msleep(20);
+	pr_info("%s: send DTR high to Modem\n", __func__);
 	ret = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
 			USB_CDC_REQ_SET_CONTROL_LINE_STATE,
 			(USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE),
@@ -942,9 +945,12 @@ int rmnet_usb_ctrl_probe(struct usb_interface *intf,
 
 	ctl_msg_dbg_mask = MSM_USB_CTL_DUMP_BUFFER;
 
-	dev->reset_notifier_block.notifier_call = rmnet_ctrl_reset_notifier;
-	blocking_notifier_chain_register(&mdm_reset_notifier_list,
+	if (!ret) {
+		dev->reset_notifier_block.notifier_call =
+						rmnet_ctrl_reset_notifier;
+		blocking_notifier_chain_register(&mdm_reset_notifier_list,
 						&dev->reset_notifier_block);
+	}
 
 	return ret;
 }
