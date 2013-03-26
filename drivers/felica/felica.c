@@ -221,7 +221,7 @@ static int felica_uart_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 	if ((uid != gmfc_uid) && (uid != gdiag_uid)
 							&& (uid != gant_uid)) {
-#ifdef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 		FELICA_LOG_DEBUG
 		    ("[MFDD] %s END, uid=[%d], gmfc_uid=[%d], gdiag_uid=[%d]",
 		     __func__, uid, gmfc_uid, gdiag_uid);
@@ -593,8 +593,7 @@ static void felica_nl_recv_msg(struct sk_buff *skb)
 	if (wskb && (wskb->len > NLMSG_SPACE(0))) {
 		nlh = nlmsg_hdr(wskb);
 		memcpy(gfa_rcv_str, NLMSG_DATA(nlh), sizeof(gfa_rcv_str));
-		if ((gfa_rcv_str[0] == FELICA_NL_CONNECT_MSG)
-		    && (gfa_connect_flag == 0)) {
+		if ((gfa_rcv_str[0] == FELICA_NL_CONNECT_MSG) && (gfa_connect_flag == 0)) {
 			/* pid of sending process */
 			gfa_pid = nlh->nlmsg_pid;
 
@@ -603,38 +602,37 @@ static void felica_nl_recv_msg(struct sk_buff *skb)
 #elif defined(CONFIG_MACH_M3)
 			port_threshold = 0x02;
 #endif
-		if (felica_get_tamper_fuse_cmd() != 1) {
-			if (system_rev >= port_threshold) {
-				s3c_gpio_cfgall_range(FELICA_UART1RX, 2,\
-				S3C_GPIO_SFN(2), S3C_GPIO_PULL_DOWN);
-				felica_uart_port = 1;
-			} else {
-				s3c_gpio_cfgall_range(FELICA_UART3RX, 2,\
-				S3C_GPIO_SFN(2), S3C_GPIO_PULL_DOWN);
-				felica_uart_port = 3;
-		}
-			felica_set_felica_info();
-			felica_uart_init();
-			felica_pon_init();
-			felica_cen_init();
-			felica_rfs_init();
-			felica_rws_init();
-			felica_ant_init();
+			if (felica_get_tamper_fuse_cmd() != 1) {
+				if (system_rev >= port_threshold) {
+					s3c_gpio_cfgall_range(FELICA_UART1RX, 2,\
+					S3C_GPIO_SFN(2), S3C_GPIO_PULL_DOWN);
+					felica_uart_port = 1;
+				} else {
+					s3c_gpio_cfgall_range(FELICA_UART3RX, 2,\
+					S3C_GPIO_SFN(2), S3C_GPIO_PULL_DOWN);
+					felica_uart_port = 3;
+				}
+				felica_set_felica_info();
+				felica_uart_init();
+				felica_pon_init();
+				felica_cen_init();
+				felica_rfs_init();
+				felica_rws_init();
+				felica_ant_init();
 				if (gdiag_name[0] != 0x00)
 					felica_uid_init();
-			}
 
-			gfa_connect_flag = 1;
-		} else if ((gfa_rcv_str[0] == FELICA_NL_RESPONCE)
-			   && (gfa_pid == nlh->nlmsg_pid)) {
+				gfa_connect_flag = 1;
+			}
+		} else if ((gfa_rcv_str[0] == FELICA_NL_RESPONCE) && (gfa_pid == nlh->nlmsg_pid)) {
 			/* wake up */
 			gfa_wait_flag = 1;
 		} else {
-			FELICA_LOG_ERR("[MFDD] %s ERROR(RCV Undefine MSG)",
-				       __func__);
+			FELICA_LOG_ERR("[MFDD] %s ERROR(RCV Undefine MSG)", __func__);
 			FELICA_LOG_ERR("RCV MSG [%d]", gfa_rcv_str[0]);
 			FELICA_LOG_ERR("rcv pid [%d]", nlh->nlmsg_pid);
 			FELICA_LOG_ERR("gfa_pid [%d]", gfa_pid);
+			FELICA_LOG_ERR("gfa_connect_flag [%d]", gfa_connect_flag);
 		}
 	}
 	kfree_skb(skb);
@@ -697,7 +695,7 @@ static void felica_nl_wait_ret_msg(void)
 }
 
 
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val)
 {
 	register u32 reg0 __asm__("r0");
@@ -784,7 +782,7 @@ static int felica_CpuAll(void)
 
 static uint8_t felica_get_tamper_fuse_cmd(void)
 {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 	u32 fuse_id;
 	int ret;
 
@@ -890,7 +888,7 @@ static int felica_pon_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 	if ((uid != gmfc_uid) && (uid != gdiag_uid)
 		&& (uid != gant_uid)) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 		FELICA_LOG_DEBUG
 		    ("[MFDD] %s END, uid=[%d], gmfc_uid=[%d], gdiag_uid=[%d]",
 		     __func__, uid, gmfc_uid, gdiag_uid);
@@ -1152,7 +1150,7 @@ static int felica_cen_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 	if (file->f_mode & FMODE_WRITE) {
 		if ((uid != gdiag_uid) && (uid != gmfl_uid)) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 			FELICA_LOG_DEBUG(\
 			"[MFDD] %s END, uid=[%d]\n", __func__, uid);
 			FELICA_LOG_DEBUG(\
@@ -1361,7 +1359,7 @@ static int felica_rfs_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 
 	if ((uid != gmfc_uid) && (uid != gdiag_uid)) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 		FELICA_LOG_DEBUG
 		    ("[MFDD] %s END, uid=[%d], gmfc_uid=[%d], gdiag_uid=[%d]",
 		     __func__, uid, gmfc_uid, gdiag_uid);
@@ -1505,7 +1503,7 @@ static int felica_rws_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 	if (file->f_mode & FMODE_WRITE) {
 		if (uid != grwm_uid) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 			FELICA_LOG_DEBUG(\
 			"[MFDD] %s END, uid=[%d],gmfc_uid=[%d],gdiag_uid=[%d]",
 			     __func__, uid, gmfc_uid, gdiag_uid);
@@ -1514,7 +1512,7 @@ static int felica_rws_open(struct inode *inode, struct file *file)
 		}
 	} else {
 		if ((uid != gmfc_uid) && (uid != grwm_uid)) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 			FELICA_LOG_DEBUG(\
 			"[MFDD] %s END, uid=[%d],gmfc_uid=[%d],gdiag_uid=[%d]",
 			     __func__, uid, gmfc_uid, gdiag_uid);
@@ -1929,7 +1927,7 @@ static int felica_uid_open(struct inode *inode, struct file *file)
 	memcpy(cmdline, cmdpos, leng);
 	cmdline[leng] = '\0';
 
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 	if (strncmp(cmdline, gdiag_name, leng) != 0) {
 		FELICA_LOG_DEBUG("[MFDD] %s ERROR, %s gdiag %s", \
 			__func__, cmdline, gdiag_name);
@@ -2055,7 +2053,7 @@ static int felica_ant_open(struct inode *inode, struct file *file)
 
 	uid = __task_cred(current)->uid;
 	if ((uid != gant_uid) && (uid != gdiag_uid)) {
-#ifndef FELICA_NO_SECURE
+#ifndef CONFIG_FELICA_NO_SECURE
 		FELICA_LOG_DEBUG(\
 		"[MFDD] %s END, uid=[%d]\n", __func__, uid);
 		FELICA_LOG_DEBUG(\
