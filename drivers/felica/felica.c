@@ -34,11 +34,11 @@
  * log
  ******************************************************************************/
 #ifdef FELICA_DEBUG
-#define FELICA_LOG_DEBUG(fmt, args...) printk(KERN_INFO fmt, ## args)
+#define FELICA_LOG_DEBUG(fmt, args...) printk(KERN_INFO "[FELICA]"#fmt, ## args)
 #else
 #define FELICA_LOG_DEBUG(fmt, args...)
 #endif
-#define FELICA_LOG_ERR(fmt, args...) printk(KERN_ERR fmt, ## args)
+#define FELICA_LOG_ERR(fmt, args...) printk(KERN_ERR "[FELICA]"#fmt, ## args)
 
 /******************************************************************************
  * global variable
@@ -221,10 +221,12 @@ static int felica_uart_open(struct inode *inode, struct file *file)
 	uid = __task_cred(current)->uid;
 	if ((uid != gmfc_uid) && (uid != gdiag_uid)
 							&& (uid != gant_uid)) {
+#ifdef FELICA_NO_SECURE
 		FELICA_LOG_DEBUG
 		    ("[MFDD] %s END, uid=[%d], gmfc_uid=[%d], gdiag_uid=[%d]",
 		     __func__, uid, gmfc_uid, gdiag_uid);
 		return -EACCES;
+#endif
 	}
 
 	if (down_interruptible(&dev_sem->felica_sem)) {
