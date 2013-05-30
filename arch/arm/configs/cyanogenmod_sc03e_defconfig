@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.64 Kernel Configuration
+# Linux/arm 3.0.80 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -215,7 +215,7 @@ CONFIG_DEFAULT_IOSCHED="row"
 # CONFIG_INLINE_WRITE_UNLOCK_BH is not set
 # CONFIG_INLINE_WRITE_UNLOCK_IRQ is not set
 # CONFIG_INLINE_WRITE_UNLOCK_IRQRESTORE is not set
-# CONFIG_MUTEX_SPIN_ON_OWNER is not set
+CONFIG_MUTEX_SPIN_ON_OWNER=y
 # CONFIG_BUILD_TARGET_SAMSUNG is not set
 CONFIG_BUILD_TARGET_AOSP=y
 # CONFIG_BUILD_TARGET_MULTI is not set
