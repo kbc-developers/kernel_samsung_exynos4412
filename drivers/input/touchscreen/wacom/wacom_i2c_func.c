@@ -762,7 +762,7 @@ void ave_level(short CoordX, short CoordY,
 	/*Right*/
 	if (CoordY > Y_INC_E1) {
 		/*Transition*/
-		if (CoordY > Y_INC_E3)
+		if (CoordY < Y_INC_E3)
 			transition = true;
 		else
 			edgeY = true;

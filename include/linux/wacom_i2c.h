@@ -162,6 +162,7 @@
 #define MAX_HAND		2
 
 #define WACOM_PEN_DETECT
+#define WACOM_HAVE_FWE_PIN
 
 /* origin offset */
 #define EPEN_B660_ORG_X 456
@@ -346,7 +347,7 @@ struct wacom_g5_platform_data {
 	int gpio_pen_insert;
 #endif
 #ifdef WACOM_HAVE_FWE_PIN
-	int gpio_fwe;
+	void (*compulsory_flash_mode)(bool);
 #endif
 	int (*init_platform_hw)(void);
 	int (*exit_platform_hw)(void);
@@ -394,6 +395,7 @@ struct wacom_i2c {
 #endif
 #ifdef WACOM_HAVE_FWE_PIN
 	int gpio_fwe;
+	bool have_fwe_pin;
 #endif
 #ifdef WACOM_IMPORT_FW_ALGO
 	bool use_offset_table;

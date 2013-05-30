@@ -546,6 +546,17 @@ int wacom_i2c_flash(struct wacom_i2c *wac_i2c)
 	}
 #endif
 
+#ifdef WACOM_HAVE_FWE_PIN
+	if (wac_i2c->have_fwe_pin) {
+		wac_i2c->wac_pdata->compulsory_flash_mode(true);
+#ifdef CONFIG_MACH_T0
+		/*Reset*/
+		wac_i2c->wac_pdata->reset_platform_hw();
+		msleep(200);
+#endif
+		printk(KERN_DEBUG"[E-PEN] Set FWE\n");
+	}
+#endif
 	wake_lock(&wac_i2c->wakelock);
 
 	ret = wacom_i2c_flash_cmd(wac_i2c);
@@ -645,6 +656,18 @@ mcu_type_error:
 
 fw_update_error:
 	wake_unlock(&wac_i2c->wakelock);
+#ifdef WACOM_HAVE_FWE_PIN
+	if (wac_i2c->have_fwe_pin) {
+		wac_i2c->wac_pdata->compulsory_flash_mode(false);
+#ifdef CONFIG_MACH_T0
+		/*Reset*/
+		wac_i2c->wac_pdata->reset_platform_hw();
+		msleep(200);
+#endif
+		printk(KERN_DEBUG"[E-PEN] Release FWE\n");
+	}
+#endif
+
 	return ret;
 }
 

@@ -124,11 +124,13 @@ int mhl_dbg_flag;
 #	define	sii9234_cbus_mutex_unlock(prm)	mutex_unlock(prm);
 #endif /*__SII9234_MUTEX_DEBUG__*/
 
+static struct mutex sii9234_irq_lock;
 #define	__SII9234_IRQ_DEBUG__
 #ifdef __SII9234_IRQ_DEBUG__
 int en_irq;
 #	define sii9234_enable_irq() \
 	do { \
+		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == false) { \
 			atomic_set(&sii9234->is_irq_enabled, true); \
 			enable_irq(sii9234->pdata->mhl_tx_client->irq); \
@@ -138,10 +140,12 @@ int en_irq;
 			printk(KERN_INFO"%s() : irq is already enabled(%d)\n" \
 					, __func__, en_irq); \
 		} \
+		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 
 #	define sii9234_disable_irq() \
 	do { \
+		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == true) { \
 			atomic_set(&sii9234->is_irq_enabled, false); \
 			disable_irq_nosync(sii9234->pdata->mhl_tx_client->irq);\
@@ -151,22 +155,27 @@ int en_irq;
 			printk(KERN_INFO"%s() : irq is already disabled(%d)\n"\
 					, __func__, en_irq); \
 		} \
+		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 #else
 #	define sii9234_enable_irq() \
 	do { \
+		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == false) { \
 			atomic_set(&sii9234->is_irq_enabled, true); \
 			enable_irq(sii9234->pdata->mhl_tx_client->irq); \
 		} \
+		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 
 #	define sii9234_disable_irq() \
 	do { \
+		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == true) { \
 			atomic_set(&sii9234->is_irq_enabled, false); \
 			disable_irq_nosync(sii9234->pdata->mhl_tx_client->irq);\
 		} \
+		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 #endif /*__SII9234_IRQ_DEBUG__*/
 
@@ -294,13 +303,71 @@ static int is_mhl_cable_connected(void)
 #	endif
 }
 #endif
-#ifdef CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE
-bool sii9234_is_mhl_power_state_on(void)
+#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
+	!defined(CONFIG_SAMSUNG_MHL_9290)
+/*
+ *  This workaournd is for prevent of HDMI_HPD pin glitch.
+ *  HDMI_HPD pin is from MHL IC's HPD pin to AP's HDMI HPD pin.
+ *  When connect/disconnect the MHL Dongle, or turn on/off MHL IC,
+ * or other cases, the glitch can be generated.
+ *  - Cases
+ *  1) 2012 Sept
+ *    a. When HDMI is connected.
+ *    b. Remove TA/HDMI cable.
+ *    c. Remove MHL dongle about 0.5 sec(shorter then 1 sec) after b.
+ *    d. Glitch is occured with HDMI connected/disconnected pop-up.
+ *
+ *  void mhl_hpd_handler(bool onoff) must be defined on HDMI driver.
+ *  That fuction will control the HDMI HPD high/low intterpt on/off.
+ *
+ *
+ *  int (*hpd_intr_state)(void);
+ *  This function pointer shows whether HDMI HPD low interrrupt was
+ * handled on HDMI driver or not. It must be assigned in HDMI driver's probe
+ * function.
+ */
+int (*hpd_intr_state)(void);
+/*
+ *  Sched_hpd_handler_false means that mhl_hpd_handler(false) must be called.
+ *  It is set on sii9234_mhl_hpd_handler_false(). It is read and cleared on
+ * call_sched_mhl_hpd_handler().
+ */
+atomic_t sched_hpd_handler_false;
+/*
+ *  void call_sched_mhl_hpd_handler(void);
+ *  This function must be called by HDMI HPD LOW IRQ handler.
+ *  If the sched_hpd_handler_false is 1, then it clears the
+ * sched_hpd_handler_false to 0 and call mhl_hpd_handler(false).
+ */
+void call_sched_mhl_hpd_handler(void)
 {
-	struct sii9234_data *sii9234 = dev_get_drvdata(sii9244_mhldev);
-	pr_info("%s(): %s\n", __func__,
-		sii9234->pdata->power_state ? "Yes" : "No");
-	return sii9234->pdata->power_state == 1;
+	if (atomic_read(&sched_hpd_handler_false) == 1) {
+		atomic_set(&sched_hpd_handler_false, 0);
+		mhl_hpd_handler(false);
+		pr_info("%s : called mhl_hpd_handler(false)\n", __func__);
+	}
+}
+/*
+ *  void sii9234_mhl_hpd_handler_false(void);
+ *  This function checks whether HDMI HPD LOW IRQ handler was handled
+ * by hpd_intr_state().
+ *  If IRQ handler was handled, mhl_hpd_handler(false) is called directly,
+ * if not, mhl_hpd_handler(false) is scheduled by setting the
+ * sched_hpd_handler_false to 1.
+ */
+void sii9234_mhl_hpd_handler_false(void)
+{
+	if (hpd_intr_state != NULL) {
+		if (hpd_intr_state() == LOW) {
+			mhl_hpd_handler(false);
+		} else {
+			atomic_set(&sched_hpd_handler_false, 1);
+			pr_info("%s : mhl_hpd_handler(false)"
+					" is scheduled\n", __func__);
+		}
+	} else {
+		mhl_hpd_handler(false);
+	}
 }
 #endif
 
@@ -341,6 +408,11 @@ u8 mhl_onoff_ex(bool onoff)
 
 		if (sii9234->pdata->hw_onoff)
 			sii9234->pdata->hw_onoff(0);
+
+#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
+	!defined(CONFIG_SAMSUNG_MHL_9290)
+		sii9234_mhl_hpd_handler_false();
+#endif
 
 #ifdef CONFIG_SAMSUNG_USE_11PIN_CONNECTOR
 #if !defined(CONFIG_MACH_P4NOTE)
@@ -1464,6 +1536,10 @@ static void goto_d3(void)
 
 	sii9234->rsen = false;
 
+#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
+	!defined(CONFIG_SAMSUNG_MHL_9290)
+		sii9234_mhl_hpd_handler_false();
+#endif
 	memset(cbus_pkt_buf, 0x00, sizeof(cbus_pkt_buf));
 
 	ret = sii9234_power_init(sii9234);
@@ -3889,6 +3965,7 @@ static int __devinit sii9234_mhl_tx_i2c_probe(struct i2c_client *client,
 
 	init_waitqueue_head(&sii9234->wq);
 	mutex_init(&sii9234->lock);
+	mutex_init(&sii9234_irq_lock);
 	mutex_init(&sii9234->cbus_lock);
 
 #ifdef __SII9234_MUTEX_DEBUG__
@@ -4043,9 +4120,8 @@ static int __devinit sii9234_mhl_tx_i2c_probe(struct i2c_client *client,
 #endif
 #if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
 	!defined(CONFIG_SAMSUNG_MHL_9290)
-	is_mhl_power_state_on = sii9234_is_mhl_power_state_on;
+	atomic_set(&sched_hpd_handler_false, 0);
 #endif
-
 	return 0;
 
 #ifdef CONFIG_EXTCON

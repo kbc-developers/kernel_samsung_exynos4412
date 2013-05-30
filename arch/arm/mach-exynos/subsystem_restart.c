@@ -23,6 +23,7 @@
 #include <linux/wakelock.h>
 #include <linux/suspend.h>
 #include <mach/subsystem_restart.h>
+#include <mach/sec_debug.h>
 
 struct subsys_soc_restart_order {
 	const char * const *subsystem_list;
@@ -227,6 +228,15 @@ int subsystem_restart(const char *subsys_name)
 
 	subsys->ongoing = true;
 
+#ifdef CONFIG_SEC_DEBUG
+	/* check debug level */
+	if (!sec_debug_level.uint_val) {
+		/* debug level is low, set mdm_dump to Zero */
+		mdm_dump = 0;
+	}
+#else
+	mdm_dump = 0;
+#endif
 	data = kzalloc(sizeof(struct restart_wq_data), GFP_KERNEL);
 	if (!data) {
 		pr_warn("Failed to alloc restart data. Resetting.\n");

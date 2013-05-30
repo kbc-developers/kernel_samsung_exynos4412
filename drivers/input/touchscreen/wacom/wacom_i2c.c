@@ -1296,6 +1296,14 @@ static int wacom_i2c_probe(struct i2c_client *client,
 	wac_i2c->gpio_pen_insert = pdata->gpio_pen_insert;
 #endif
 
+#ifdef WACOM_HAVE_FWE_PIN
+	wac_i2c->have_fwe_pin = true;
+#ifdef CONFIG_MACH_T0
+	if (system_rev < WACOM_FWE1_HWID)
+		wac_i2c->have_fwe_pin = false;
+#endif
+#endif
+
 	/*Change below if irq is needed */
 	wac_i2c->irq_flag = 1;
 

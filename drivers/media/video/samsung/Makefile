@@ -12,8 +12,13 @@ obj-$(CONFIG_VIDEO_FIMG2D3X)	+= fimg2d3x/
 obj-$(CONFIG_VIDEO_FIMG2D4X)	+= fimg2d4x/
 endif
 
+ifeq ($(CONFIG_BUILD_TARGET_AOSP), y)
 obj-$(CONFIG_VIDEO_UMP)		+= ump/
-obj-$(CONFIG_VIDEO_TSI)		+= tsi/
 obj-$(CONFIG_VIDEO_MALI400MP)	+= mali/
+else
+obj-$(CONFIG_VIDEO_UMP)		+= ump_sam/
+obj-$(CONFIG_VIDEO_MALI400MP)	+= mali_sam/
+endif
+obj-$(CONFIG_VIDEO_TSI)		+= tsi/
 
 EXTRA_CFLAGS += -Idrivers/media/video

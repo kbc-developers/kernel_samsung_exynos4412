@@ -374,6 +374,11 @@
 #define	INTR_CBUS1_DESIRED_MASK		(BIT2 | BIT3 | BIT4 | BIT5 | BIT6)
 #define	INTR_CBUS2_DESIRED_MASK		(BIT2 | BIT3) /* (BIT0| BIT2 | BIT3) */
 
+enum hpd_state {
+	LOW = 0,
+	HIGH
+};
+
 enum page_num {
 	PAGE0 = 0,
 	PAGE1,

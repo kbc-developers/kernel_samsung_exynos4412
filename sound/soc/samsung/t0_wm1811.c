@@ -270,7 +270,7 @@ static int set_sub_mic_bias_mode(struct snd_kcontrol *kcontrol,
 				WM8994_MICB1_ENA, WM8994_MICB1_ENA);
 
 		if (wm1811->set_sub_mic_f)
-			wm1811->set_main_mic_f(1);
+			wm1811->set_sub_mic_f(1);
 		break;
 	case MIC_ENABLE:
 		snd_soc_update_bits(codec, WM8994_POWER_MANAGEMENT_1,
@@ -1017,41 +1017,7 @@ static ssize_t reselect_jack_show(struct device *dev,
 static ssize_t reselect_jack_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t size)
 {
-	struct snd_soc_codec *codec = dev_get_drvdata(dev);
-	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
-	int reg = 0;
-
-	reg = snd_soc_read(codec, WM8958_MIC_DETECT_3);
-	if (reg == 0x402) {
-		dev_info(codec->dev, "Detected open circuit\n");
-
-		snd_soc_update_bits(codec, WM8958_MICBIAS2,
-				    WM8958_MICB2_DISCH, WM8958_MICB2_DISCH);
-		/* Enable debounce while removed */
-		snd_soc_update_bits(codec, WM1811_JACKDET_CTRL,
-				    WM1811_JACKDET_DB, WM1811_JACKDET_DB);
-
-		wm8994->mic_detecting = false;
-		wm8994->jack_mic = false;
-		snd_soc_update_bits(codec, WM8958_MIC_DETECT_1,
-				    WM8958_MICD_ENA, 0);
-
-		if (wm8994->active_refcount) {
-			snd_soc_update_bits(codec,
-				WM8994_ANTIPOP_2,
-				WM1811_JACKDET_MODE_MASK,
-				WM1811_JACKDET_MODE_AUDIO);
-		} else {
-			snd_soc_update_bits(codec,
-				WM8994_ANTIPOP_2,
-				WM1811_JACKDET_MODE_MASK,
-				WM1811_JACKDET_MODE_JACK);
-		}
-
-		snd_soc_jack_report(wm8994->micdet[0].jack, 0,
-				    SND_JACK_MECHANICAL | SND_JACK_HEADSET |
-				    wm8994->btn_mask);
-	}
+	pr_info("%s : operate nothing\n", __func__);
 	return size;
 }
 

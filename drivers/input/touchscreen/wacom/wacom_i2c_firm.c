@@ -43,29 +43,45 @@ const char Firmware_checksum[] = { 0x1F, 0xee, 0x06, 0x4b, 0xdd, };
 const unsigned int Binary_nLength = 0xEFFF;
 const unsigned char Mpu_type = 0x28;
 
+/*KOR*/
 #if defined(CONFIG_TARGET_LOCALE_KOR)
-#if defined(CONFIG_MACH_T0_KOR_SKT)
-unsigned int Firmware_version_of_file = 0x305;
+#if defined(CONFIG_MACH_T0_KOR_SKT) || defined(CONFIG_MACH_T0_KOR_KT)
+unsigned int Firmware_version_of_file = 0x312;
 unsigned char *firmware_name = "epen/W9001_B746S.bin";
-char Firmware_checksum[] = { 0x1F, 0xE4, 0xB4, 0x71, 0x60, };
-#elif defined(CONFIG_MACH_T0_KOR_KT)
-unsigned int Firmware_version_of_file = 0x305;
-unsigned char *firmware_name = "epen/W9001_B746K.bin";
-char Firmware_checksum[] = { 0x1F, 0xE4, 0xB4, 0x71, 0x60, };
+char Firmware_checksum[] = { 0x1F, 0x37, 0x28, 0xC8, 0x7C, };
 #elif defined(CONFIG_MACH_T0_KOR_LGT)
-unsigned int Firmware_version_of_file = 0x404;
+unsigned int Firmware_version_of_file = 0x40A;
 unsigned char *firmware_name = "epen/W9001_B746L.bin";
-char Firmware_checksum[] = { 0x1F, 0x23, 0xD7, 0xCF, 0xDF, };
+char Firmware_checksum[] = { 0x1F, 0xAA, 0x40, 0x78, 0x48, };
 #endif
+
+/*JPN*/
 #elif defined(CONFIG_MACH_T0_JPN_LTE_DCM)
-unsigned int Firmware_version_of_file = 0x304;
+unsigned int Firmware_version_of_file = 0x312;
 unsigned char *firmware_name = "epen/W9001_B746JD.bin";
-char Firmware_checksum[] = { 0x1F, 0xA6, 0xFB, 0xBF, 0x11, };
+char Firmware_checksum[] = { 0x1F, 0x37, 0x28, 0xC8, 0x7C, };
+
+/*USA*/
+#elif defined(CONFIG_MACH_T0_USA_VZW) \
+	|| defined(CONFIG_MACH_T0_USA_SPR) \
+	|| defined(CONFIG_MACH_T0_USA_USCC)
+unsigned int Firmware_version_of_file = 0x602;
+unsigned char *firmware_name = "epen/W9001_B746VZW.bin";
+
+char Firmware_checksum[] = { 0x1F, 0x46, 0xB1, 0x68, 0x88, };
+
+/*CHN*/
+#elif defined(CONFIG_MACH_T0_CHN_CTC)
+unsigned int Firmware_version_of_file = 0x700;
+unsigned char *firmware_name = "epen/W9001_0700.bin";
+char Firmware_checksum[] = { 0x1F, 0xD4, 0xD1, 0x5A, 0x91, };
+
+/*EUR3G/EURLTE/ATT/TMO/CMCC*/
 #else
-unsigned int Firmware_version_of_file = 0x25F;
+unsigned int Firmware_version_of_file = 0x268;
 unsigned char *firmware_name = "epen/W9001_B746.bin";
 
-char Firmware_checksum[] = { 0x1F, 0x27, 0x85, 0x8B, 0xFB, };
+char Firmware_checksum[] = { 0x1F, 0x78, 0xB1, 0xAB, 0x78, };
 #endif
 /*checksum for 0x13D*/
 const char B713X_checksum[] = { 0x1F, 0xB5, 0x84, 0x38, 0x34, };

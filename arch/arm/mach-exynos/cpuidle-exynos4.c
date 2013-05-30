@@ -381,6 +381,18 @@ static int check_idpram_op(void)
 }
 #endif
 
+#if defined(CONFIG_ISDBT)
+static int check_isdbt_op(void)
+{
+	/* This pin is high when isdbt is working */
+	int isdbt_is_running = gpio_get_value(GPIO_ISDBT_EN);
+	
+	if (isdbt_is_running != 0)
+		printk("isdbt_is_running is high\n");
+	return isdbt_is_running;
+}
+#endif
+
 static atomic_t sromc_use_count;
 
 void set_sromc_access(bool access)
@@ -417,6 +429,11 @@ static int exynos4_check_operation(void)
 #endif
 	if (check_usb_op())
 		return 1;
+	
+#if defined(CONFIG_ISDBT)
+	if (check_isdbt_op())
+		return 1;
+#endif
 
 #if defined(CONFIG_BT)
 	if (check_bt_op())

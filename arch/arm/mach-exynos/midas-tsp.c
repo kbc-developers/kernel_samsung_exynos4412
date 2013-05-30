@@ -2214,7 +2214,7 @@ static struct melfas_tsi_platform_data mms_ts_pdata = {
 	.power = melfas_power,
 	.mux_fw_flash = melfas_mux_fw_flash,
 	.is_vdd_on = is_melfas_vdd_on,
-	.config_fw_version = "I9300_Me_0507",
+	.config_fw_version = "I9300_Me_0924",
 	.lcd_type = melfas_get_lcdtype,
 	.register_cb = melfas_register_callback,
 };
@@ -2298,4 +2298,3 @@ void midas_tsp_request_qos(void *data)
 	schedule_delayed_work_on(0, &busqos_work, HZ / 5);
 }
 #endif
-

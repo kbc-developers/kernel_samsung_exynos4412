@@ -27,7 +27,7 @@ static struct wacom_g5_callbacks *wacom_callbacks;
 static int wacom_early_suspend_hw(void)
 {
 	gpio_set_value(GPIO_PEN_RESET_N, 0);
-#if defined(CONFIG_MACH_T0_EUR_OPEN)
+#if defined(CONFIG_MACH_T0_EUR_OPEN) || defined(CONFIG_MACH_T0_CHN_OPEN)
 	if (system_rev >= 10)
 		gpio_direction_output(GPIO_WACOM_LDO_EN, 0);
 	else
@@ -63,7 +63,7 @@ static int wacom_resume_hw(void)
 static int wacom_reset_hw(void)
 {
 	wacom_early_suspend_hw();
-	msleep(200);
+	msleep(100);
 	wacom_late_resume_hw();
 
 	return 0;
@@ -73,6 +73,13 @@ static void wacom_register_callbacks(struct wacom_g5_callbacks *cb)
 {
 	wacom_callbacks = cb;
 };
+
+#ifdef WACOM_HAVE_FWE_PIN
+static void wacom_compulsory_flash_mode(bool en)
+{
+	gpio_set_value(GPIO_PEN_FWE1, en);
+}
+#endif
 
 
 static struct wacom_g5_platform_data wacom_platform_data = {
@@ -101,6 +108,9 @@ static struct wacom_g5_platform_data wacom_platform_data = {
 	.late_resume_platform_hw = wacom_late_resume_hw,
 	.reset_platform_hw = wacom_reset_hw,
 	.register_cb = wacom_register_callbacks,
+#ifdef WACOM_HAVE_FWE_PIN
+	.compulsory_flash_mode = wacom_compulsory_flash_mode,
+#endif
 #ifdef WACOM_PEN_DETECT
 	.gpio_pen_insert = GPIO_WACOM_SENSE,
 #endif
