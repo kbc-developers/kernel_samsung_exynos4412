@@ -34,11 +34,16 @@ else
   BUILD_SELECT=$1
 fi
 
+echo "BOOT_RAMDISK_SRC_DIR=$BOOT_RAMDISK_SRC_DIR"
 # copy RAMDISK
 echo ""
 echo "=====> COPY RAMDISK"
-copy_ramdisk
-
+if [ "$USE_INITRAMFS" = 'y' ]; then
+  copy_ramdisk $BOOT_RAMDISK_SRC_DIR $BOOT_RAMDISK_TMP_DIR
+  copy_ramdisk $RECO_RAMDISK_SRC_DIR $RECO_RAMDISK_TMP_DIR
+else
+  copy_ramdisk $RAMDISK_SRC_DIR $RAMDISK_TMP_DIR
+fi
 
 # make start
 if [ "$BUILD_SELECT" = 'all' -o "$BUILD_SELECT" = 'a' ]; then
@@ -50,12 +55,18 @@ if [ "$BUILD_SELECT" = 'all' -o "$BUILD_SELECT" = 'a' ]; then
 fi
 
 if [ "$BUILD_SELECT" != 'image' -a "$BUILD_SELECT" != 'i' ]; then
-  echo ""
-  echo "=====> BUILDING..."
   if [ -e make.log ]; then
     mv make.log make_old.log
   fi
-  nice -n 10 make O=$OBJ_DIR -j12 2>&1 | tee make.log
+  if [ "$USE_INITRAMFS" = 'y' ]; then
+    echo ""
+    echo "=====> MAKE KERNEL MODULE.."
+    nice -n 10 make O=$OBJ_DIR -j12 modules 2>&1 | tee make.log
+  else
+    echo ""
+    echo "=====> MAKE KERNEL IMAGE..."
+    nice -n 10 make O=$OBJ_DIR -j12 2>&1 | tee make.log
+  fi
 fi
 
 # check compile error
@@ -67,10 +78,25 @@ if [ "$COMPILE_ERROR" ]; then
   exit -1
 fi
 
-# *.ko replace
+# *.ko install
 echo ""
 echo "=====> INSTALL KERNEL MODULES"
-find -name '*.ko' -exec cp -av {} $RAMDISK_TMP_DIR/lib/modules/ \;
+if [ "$USE_INITRAMFS" = 'y' ]; then
+  find -name '*.ko' -exec cp -av {} $BOOT_RAMDISK_TMP_DIR/lib/modules/ \;
+  STRIP=strip
+  $CROSS_COMPILE$STRIP --strip-unneeded $BOOT_RAMDISK_TMP_DIR/lib/modules/*
+else
+  find -name '*.ko' -exec cp -av {} $RAMDISK_TMP_DIR/lib/modules/ \;
+fi
+
+if [ "$USE_INITRAMFS" = 'y' ]; then
+  echo ""
+  echo "=====> GENERATE INITRAMFS"
+  generate_initramfs
+  echo ""
+  echo "=====> MAKE KERNEL IMAGE..."
+  nice -n 10 make O=$OBJ_DIR -j12 2>&1 | tee make.log
+fi
 
 echo ""
 echo "=====> CREATE RELEASE IMAGE"
