@@ -48,6 +48,12 @@ struct vibrator_drvdata {
 
 #ifdef CONFIG_VIBETONZ
 static struct vibrator_drvdata *g_data;
+#ifdef CONFIG_TWEAK_VIB_CTRL
+void vibetonz_update_duty(int duty)
+{
+	pwm_duty = duty;
+}
+#endif
 #endif
 
 static int vibetonz_clk_on(struct device *dev, bool en)
