@@ -20,3 +20,12 @@ config SND_SOC_MC1N2_MIC_ADC_SWAP
     When using I9100 libaudio, this causes the microphones to not
     work properly in calls.  This allows proper microphone operation
     when SGH-I777 is used with GT-I9100 libaudio.
+
+config SND_TWEAK_HW_VOLUME
+	bool "tweak mc1n2 hw volume"
+	default n
+
+config SND_FREQ_LOCK
+	bool "sound freq lock"
+	default n
+
