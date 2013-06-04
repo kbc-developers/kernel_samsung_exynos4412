@@ -29,6 +29,13 @@
 static unsigned long pwm_val = 50; /* duty in percent */
 static int pwm_duty = 27787; /* duty value, 37050=100%, 27787=50%, 18525=0% */
 
+#ifdef CONFIG_TWEAK_VIB_CTRL
+void vibetonz_update_duty(int duty)
+{
+	pwm_duty = duty;
+}
+#endif
+
 struct max77693_haptic_data {
 	struct max77693_dev *max77693;
 	struct i2c_client *i2c;
