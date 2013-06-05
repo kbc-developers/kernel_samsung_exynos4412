@@ -352,3 +352,8 @@ config FB_S5P_V2_TL2796
 	---help---
 	  This enables support for Samsung  TL2796 WVGA LCD panel
 endchoice
+
+config LCD_CONTROL
+	bool "lcd control"
+	depends on FB_S5P_LD9040
+	default n
