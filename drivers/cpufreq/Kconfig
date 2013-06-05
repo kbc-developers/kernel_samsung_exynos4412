@@ -519,6 +519,14 @@ config CPU_FREQ_DVFS_MONITOR
 	  This option adds a proc node for dvfs monitoring.
 	  /proc/dvfs_mon
 
+config CPU_FREQ_PM
+	bool "cpu freq power manager"
+	depends on CPU_FREQ
+	help
+	  This option is cpufreq control at the screen OFF.
+
+config CPU_VOLTAGE_CONTROL
+	bool "cpu voltage control"
 
 menu "x86 CPU frequency scaling drivers"
 depends on X86

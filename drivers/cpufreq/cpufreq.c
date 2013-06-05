@@ -553,6 +553,13 @@ static ssize_t show_scaling_setspeed(struct cpufreq_policy *policy, char *buf)
 	return policy->governor->show_setspeed(policy, buf);
 }
 
+#if defined(CONFIG_CPU_VOLTAGE_CONTROL)
+/* sysfs interface for UV control */
+extern ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf);
+extern ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
+                                      const char *buf, size_t count);
+#endif /* CONFIG_CPU_VOLTAGE_CONTROL */
+
 /**
  * show_scaling_driver - show the current cpufreq HW/BIOS limitation
  */
@@ -568,6 +575,12 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 	return sprintf(buf, "%u\n", policy->cpuinfo.max_freq);
 }
 
+#if defined(CONFIG_MACH_U1)
+extern ssize_t show_asv_group(struct cpufreq_policy *policy, char *buf);
+extern ssize_t store_asv_group(struct cpufreq_policy *policy,
+                                      const char *buf, size_t count);
+#endif
+
 cpufreq_freq_attr_ro_perm(cpuinfo_cur_freq, 0400);
 cpufreq_freq_attr_ro(cpuinfo_min_freq);
 cpufreq_freq_attr_ro(cpuinfo_max_freq);
@@ -582,6 +595,12 @@ cpufreq_freq_attr_rw(scaling_min_freq);
 cpufreq_freq_attr_rw(scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
+#if defined(CONFIG_CPU_VOLTAGE_CONTROL)
+cpufreq_freq_attr_rw(UV_mV_table);
+#endif
+#if defined(CONFIG_MACH_U1)
+cpufreq_freq_attr_rw(asv_group);
+#endif
 
 static struct attribute *default_attrs[] = {
 	&cpuinfo_min_freq.attr,
@@ -595,6 +614,12 @@ static struct attribute *default_attrs[] = {
 	&scaling_driver.attr,
 	&scaling_available_governors.attr,
 	&scaling_setspeed.attr,
+#if defined(CONFIG_CPU_VOLTAGE_CONTROL)
+	&UV_mV_table.attr,
+#endif
+#if defined(CONFIG_MACH_U1)
+	&asv_group.attr,
+#endif
 	NULL
 };
 
