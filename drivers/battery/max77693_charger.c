@@ -463,7 +463,8 @@ void max77693_set_input_current(struct max77693_charger_data *chg_data,
 #endif
 
 	if (set_current == OFF_CURR) {
-		max77693_write_reg(i2c, MAX77693_CHG_REG_CHG_CNFG_09, set_current);
+		max77693_write_reg(i2c, MAX77693_CHG_REG_CHG_CNFG_09,
+							set_current);
 
 		if (chg_data->soft_reg_state == true) {
 			pr_info("%s: exit soft regulation loop\n", __func__);
@@ -681,8 +682,7 @@ static int max77693_get_cable_type(struct max77693_charger_data *chg_data)
 #ifdef CONFIG_BATTERY_WPC_CHARGER
 	bool wc_state;
 #endif
-	bool retry_det;
-	bool chg_det_erred = false; /* TEMP: set as true for logging */
+	bool retry_det, chg_det_erred;
 	bool otg_detected = false;
 	int retry_cnt = 0;
 	pr_debug("%s\n", __func__);
@@ -976,10 +976,6 @@ static int max77693_get_online_type(struct max77693_charger_data *chg_data)
 	pr_info("%s\n", __func__);
 
 	m_typ = max77693_get_cable_type(chg_data);
-
-	pr_info("%s: main(%d), sub(%d), pwr(%d)\n", __func__, m_typ,
-					chg_data->cable_sub_type,
-					chg_data->cable_pwr_type);
 
 	state = ((m_typ << ONLINE_TYPE_MAIN_SHIFT) |
 		(chg_data->cable_sub_type << ONLINE_TYPE_SUB_SHIFT) |

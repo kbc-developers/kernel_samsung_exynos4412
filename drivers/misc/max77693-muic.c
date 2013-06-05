@@ -2263,6 +2263,10 @@ static int max77693_muic_handle_attach(struct max77693_muic_info *info,
 				 "%s: Ignore irq:%d at MHL detection\n",
 				 __func__, irq);
 			if (vbvolt) {
+				if (info->cable_type == CABLE_TYPE_MHL_MUIC
+						&& chgtyp == CHGTYP_USB)
+					info->cable_type = CABLE_TYPE_MHL_VB_MUIC;
+
 				dev_info(info->dev, "%s: call charger_cb(%d)"
 					, __func__, vbvolt);
 				max77693_muic_set_charging_type(info, false);
