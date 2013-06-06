@@ -62,6 +62,11 @@
 #include <plat/s5p-sysmmu.h>
 #endif
 
+#if defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040)
+bool s3cfb_mdnie_force_disable;
+bool s3cfb_mdnie_suspended;
+#endif
+
 struct s3cfb_fimd_desc		*fbfimd;
 
 struct s3cfb_global *get_fimd_global(int id)
@@ -481,6 +486,76 @@ static void s3c_fb_update_regs_handler(struct kthread_work *work)
 	}
 }
 
+#if defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040)
+static int s3cfb_sysfs_store_mdnie_power(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t len)
+{
+	u32 reg, i, enable;
+	struct s3cfb_global *fbdev[2];
+
+	if (s3cfb_mdnie_suspended)
+		return len;
+
+	sscanf(buf, "%d", &enable);
+
+	if (enable && (s3cfb_mdnie_force_disable == false)) {
+		for (i = 0; i < FIMD_MAX; i++) {
+			fbdev[i] = fbfimd->fbdev[i];
+			reg = readl(S3C_VA_SYS + 0x0210);
+			reg &= ~(1<<13);
+			reg &= ~(1<<12);
+			reg &= ~(3<<10);
+			reg |= (1<<0);
+			reg &= ~(1<<1);
+			writel(reg, S3C_VA_SYS + 0x0210);
+			writel(3, fbdev[i]->regs + 0x27c);
+			s3c_mdnie_init_global(fbdev[i]);
+			s3c_mdnie_display_on(fbdev[i]);
+		}
+		printk("s3cfb_sysfs_store_mdnie_power() is called : mDNIE is ON\n");
+	} else {
+		for (i = 0; i < FIMD_MAX; i++) {
+			fbdev[i] = fbfimd->fbdev[i];
+			writel(0, fbdev[i]->regs + 0x27c);
+			msleep(20);
+			reg = readl(S3C_VA_SYS + 0x0210);
+			reg |= (1<<1);
+			writel(reg, S3C_VA_SYS + 0x0210);
+			s3c_mdnie_display_off();
+			s3c_mdnie_off();
+		}
+		printk("s3cfb_sysfs_store_mdnie_power() is called : mDNIE is OFF\n");
+	}
+
+	return len;
+}
+
+static DEVICE_ATTR(mdnie_power, 0664, NULL, s3cfb_sysfs_store_mdnie_power);
+
+
+static int s3cfb_sysfs_show_mdnie_force_disable(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", s3cfb_mdnie_force_disable);
+}
+
+static int s3cfb_sysfs_store_mdnie_force_disable(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t len)
+{
+	int value;
+
+	sscanf(buf, "%d", &value);
+	s3cfb_mdnie_force_disable = value ? true : false;
+
+	return len;
+}
+static DEVICE_ATTR(mdnie_force_disable, 0664,
+	s3cfb_sysfs_show_mdnie_force_disable, s3cfb_sysfs_store_mdnie_force_disable);
+
+#endif /* defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040) */
+
 static int s3cfb_probe(struct platform_device *pdev)
 {
 	struct s3c_platform_fb *pdata = NULL;
@@ -708,6 +783,19 @@ static int s3cfb_probe(struct platform_device *pdev)
 	if (ret < 0)
 		dev_err(fbdev[0]->dev, "failed to add sysfs entries\n");
 
+#if defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040)
+	s3cfb_mdnie_force_disable = false;
+	s3cfb_mdnie_suspended = false;
+
+	ret = device_create_file(&(pdev->dev), &dev_attr_mdnie_power);
+	if (ret < 0)
+		dev_err(fbdev[0]->dev, "failed to add sysfs entries : mdnie_power\n");
+
+	ret = device_create_file(&(pdev->dev), &dev_attr_mdnie_force_disable);
+	if (ret < 0)
+		dev_err(fbdev[0]->dev, "failed to add sysfs entries : mdnie_force_disable\n");
+#endif
+
 #ifdef DISPLAY_BOOT_PROGRESS
 	if (!(readl(S5P_INFORM2)))
 		s3cfb_start_progress(fbdev[0]->fb[pdata->default_win]);
@@ -890,6 +978,10 @@ void s3cfb_early_suspend(struct early_suspend *h)
 
 	printk(KERN_INFO "+%s\n", __func__);
 
+#if defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040)
+	s3cfb_mdnie_suspended = true;
+#endif
+
 #ifdef CONFIG_FB_S5P_MIPI_DSIM
 	if (lcd_early_suspend)
 		lcd_early_suspend();
@@ -969,6 +1061,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	struct s3cfb_global *fbdev[2];
 	int i, j;
 	struct platform_device *pdev = to_platform_device(info->dev);
+	u32 reg;
 
 	dev_info(info->dev, "+%s\n", __func__);
 
@@ -1072,6 +1165,23 @@ void s3cfb_late_resume(struct early_suspend *h)
 	if (lcd_late_resume)
 		lcd_late_resume();
 #endif
+
+#if defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040)
+	if (s3cfb_mdnie_force_disable) {
+		for (i = 0; i < FIMD_MAX; i++) {
+			fbdev[i] = fbfimd->fbdev[i];
+			writel(0, fbdev[i]->regs + 0x27c);
+			msleep(20);
+			reg = readl(S3C_VA_SYS + 0x0210);
+			reg |= (1<<1);
+			writel(reg, S3C_VA_SYS + 0x0210);
+			s3c_mdnie_display_off();
+			s3c_mdnie_off();
+		}
+	}
+
+	s3cfb_mdnie_suspended = false;
+#endif /* defined(CONFIG_TWEAK_MDNIE_CTRL) && defined(CONFIG_FB_S5P_LD9040) */
 
 	dev_info(info->dev, "-%s\n", __func__);
 
