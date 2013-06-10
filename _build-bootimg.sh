@@ -45,6 +45,11 @@ else
   copy_ramdisk $RAMDISK_SRC_DIR $RAMDISK_TMP_DIR
 fi
 
+# boot splash header
+if [ -f ./drivers/video/samsung/logo_rgb24_user.h ]; then
+  export USER_BOOT_SPLASH=y
+fi
+
 # make start
 if [ "$BUILD_SELECT" = 'all' -o "$BUILD_SELECT" = 'a' ]; then
   echo ""
