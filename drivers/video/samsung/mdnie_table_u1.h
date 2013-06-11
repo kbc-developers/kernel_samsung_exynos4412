@@ -3,7 +3,7 @@
 
 #include "mdnie.h"
 
-
+#if 0
 static const unsigned short tune_cyanogenmod[] = {
 	/*start */
 	0x0001, 0x0000, /* */
@@ -20,6 +20,7 @@ static const unsigned short tune_cyanogenmod[] = {
 	/*end */
 	END_SEQ, 0x0000,
 };
+#endif
 
 static const unsigned short tune_dynamic_gallery[] = {
 	/*start U1 dynamic gallery */
@@ -1047,7 +1048,7 @@ struct mdnie_tunning_info etc_table[CABC_MAX][OUTDOOR_MAX][TONE_MAX] = {
 struct mdnie_tunning_info tunning_table[CABC_MAX][MODE_MAX][SCENARIO_MAX] = {
 	{
 		{
-			{"CYANOGENMOD",		tune_cyanogenmod},
+			{"CYANOGENMOD",		tune_dynamic_ui},
 			{"DYNAMIC_UI",		tune_dynamic_ui},
 			{"DYNAMIC_VIDEO",	tune_dynamic_video},
 			{"DYNAMIC_VIDEO",	tune_dynamic_video},
@@ -1057,7 +1058,7 @@ struct mdnie_tunning_info tunning_table[CABC_MAX][MODE_MAX][SCENARIO_MAX] = {
 			{"DYNAMIC_GALLERY",	tune_dynamic_gallery},
 			{"DYNAMIC_VT",		tune_dynamic_vt},
 		}, {
-			{"CYANOGENMOD",		tune_cyanogenmod},
+			{"CYANOGENMOD",		tune_standard_ui},
 			{"STANDARD_UI",		tune_standard_ui},
 			{"STANDARD_VIDEO",	tune_standard_video},
 			{"STANDARD_VIDEO",	tune_standard_video},
@@ -1067,7 +1068,7 @@ struct mdnie_tunning_info tunning_table[CABC_MAX][MODE_MAX][SCENARIO_MAX] = {
 			{"STANDARD_GALLERY",	tune_standard_gallery},
 			{"STANDARD_VT",		tune_standard_vt},
 		}, {
-			{"CYANOGENMOD",		tune_cyanogenmod},
+			{"CYANOGENMOD",		tune_natural_ui},
 			{"NATURAL_UI",		tune_natural_ui},
 			{"NATURAL_VIDEO",	tune_natural_video},
 			{"NATURAL_VIDEO",	tune_natural_video},
@@ -1077,7 +1078,7 @@ struct mdnie_tunning_info tunning_table[CABC_MAX][MODE_MAX][SCENARIO_MAX] = {
 			{"NATURAL_GALLERY",	tune_natural_gallery},
 			{"NATURAL_VT",		tune_natural_vt},
 		}, {
-			{"CYANOGENMOD",		tune_cyanogenmod},
+			{"CYANOGENMOD",		tune_movie_ui},
 			{"MOVIE_UI",		tune_movie_ui},
 			{"MOVIE_VIDEO",		tune_movie_video},
 			{"MOVIE_VIDEO",		tune_movie_video},
