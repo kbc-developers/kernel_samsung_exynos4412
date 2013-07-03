@@ -41,6 +41,7 @@
 #include <linux/proc_fs.h>
 #include <linux/wakelock.h>
 #include <linux/earlysuspend.h>
+#include <linux/hrtimer.h>
 #ifdef CONFIG_EXTCON
 #include <linux/extcon.h>
 #endif
@@ -54,7 +55,8 @@
 /* #define __CONFIG_MHL_SWING_LEVEL__ */
 #define	__CONFIG_SS_FACTORY__
 #define	__CONFIG_MHL_DEBUG__
-#if defined(CONFIG_MACH_T0) || defined(CONFIG_MACH_M3)
+#if defined(CONFIG_MACH_T0) || defined(CONFIG_MACH_M3) \
+	|| defined(CONFIG_MACH_M0_DUOSCTC)
 #	define __CONFIG_MHL_VER_1_2__
 #else
 #	define __CONFIG_MHL_VER_1_1__
@@ -124,13 +126,11 @@ int mhl_dbg_flag;
 #	define	sii9234_cbus_mutex_unlock(prm)	mutex_unlock(prm);
 #endif /*__SII9234_MUTEX_DEBUG__*/
 
-static struct mutex sii9234_irq_lock;
 #define	__SII9234_IRQ_DEBUG__
 #ifdef __SII9234_IRQ_DEBUG__
 int en_irq;
 #	define sii9234_enable_irq() \
 	do { \
-		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == false) { \
 			atomic_set(&sii9234->is_irq_enabled, true); \
 			enable_irq(sii9234->pdata->mhl_tx_client->irq); \
@@ -140,12 +140,10 @@ int en_irq;
 			printk(KERN_INFO"%s() : irq is already enabled(%d)\n" \
 					, __func__, en_irq); \
 		} \
-		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 
 #	define sii9234_disable_irq() \
 	do { \
-		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == true) { \
 			atomic_set(&sii9234->is_irq_enabled, false); \
 			disable_irq_nosync(sii9234->pdata->mhl_tx_client->irq);\
@@ -155,27 +153,22 @@ int en_irq;
 			printk(KERN_INFO"%s() : irq is already disabled(%d)\n"\
 					, __func__, en_irq); \
 		} \
-		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 #else
 #	define sii9234_enable_irq() \
 	do { \
-		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == false) { \
 			atomic_set(&sii9234->is_irq_enabled, true); \
 			enable_irq(sii9234->pdata->mhl_tx_client->irq); \
 		} \
-		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 
 #	define sii9234_disable_irq() \
 	do { \
-		sii9234_mutex_lock(&sii9234_irq_lock); \
 		if (atomic_read(&sii9234->is_irq_enabled) == true) { \
 			atomic_set(&sii9234->is_irq_enabled, false); \
 			disable_irq_nosync(sii9234->pdata->mhl_tx_client->irq);\
 		} \
-		sii9234_mutex_unlock(&sii9234_irq_lock); \
 	} while (0)
 #endif /*__SII9234_IRQ_DEBUG__*/
 
@@ -303,71 +296,13 @@ static int is_mhl_cable_connected(void)
 #	endif
 }
 #endif
-#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
-	!defined(CONFIG_SAMSUNG_MHL_9290)
-/*
- *  This workaournd is for prevent of HDMI_HPD pin glitch.
- *  HDMI_HPD pin is from MHL IC's HPD pin to AP's HDMI HPD pin.
- *  When connect/disconnect the MHL Dongle, or turn on/off MHL IC,
- * or other cases, the glitch can be generated.
- *  - Cases
- *  1) 2012 Sept
- *    a. When HDMI is connected.
- *    b. Remove TA/HDMI cable.
- *    c. Remove MHL dongle about 0.5 sec(shorter then 1 sec) after b.
- *    d. Glitch is occured with HDMI connected/disconnected pop-up.
- *
- *  void mhl_hpd_handler(bool onoff) must be defined on HDMI driver.
- *  That fuction will control the HDMI HPD high/low intterpt on/off.
- *
- *
- *  int (*hpd_intr_state)(void);
- *  This function pointer shows whether HDMI HPD low interrrupt was
- * handled on HDMI driver or not. It must be assigned in HDMI driver's probe
- * function.
- */
-int (*hpd_intr_state)(void);
-/*
- *  Sched_hpd_handler_false means that mhl_hpd_handler(false) must be called.
- *  It is set on sii9234_mhl_hpd_handler_false(). It is read and cleared on
- * call_sched_mhl_hpd_handler().
- */
-atomic_t sched_hpd_handler_false;
-/*
- *  void call_sched_mhl_hpd_handler(void);
- *  This function must be called by HDMI HPD LOW IRQ handler.
- *  If the sched_hpd_handler_false is 1, then it clears the
- * sched_hpd_handler_false to 0 and call mhl_hpd_handler(false).
- */
-void call_sched_mhl_hpd_handler(void)
+#ifdef CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE
+bool sii9234_is_mhl_power_state_on(void)
 {
-	if (atomic_read(&sched_hpd_handler_false) == 1) {
-		atomic_set(&sched_hpd_handler_false, 0);
-		mhl_hpd_handler(false);
-		pr_info("%s : called mhl_hpd_handler(false)\n", __func__);
-	}
-}
-/*
- *  void sii9234_mhl_hpd_handler_false(void);
- *  This function checks whether HDMI HPD LOW IRQ handler was handled
- * by hpd_intr_state().
- *  If IRQ handler was handled, mhl_hpd_handler(false) is called directly,
- * if not, mhl_hpd_handler(false) is scheduled by setting the
- * sched_hpd_handler_false to 1.
- */
-void sii9234_mhl_hpd_handler_false(void)
-{
-	if (hpd_intr_state != NULL) {
-		if (hpd_intr_state() == LOW) {
-			mhl_hpd_handler(false);
-		} else {
-			atomic_set(&sched_hpd_handler_false, 1);
-			pr_info("%s : mhl_hpd_handler(false)"
-					" is scheduled\n", __func__);
-		}
-	} else {
-		mhl_hpd_handler(false);
-	}
+	struct sii9234_data *sii9234 = dev_get_drvdata(sii9244_mhldev);
+	pr_info("%s(): %s\n", __func__,
+		sii9234->pdata->power_state ? "Yes" : "No");
+	return sii9234->pdata->power_state == 1;
 }
 #endif
 
@@ -408,11 +343,6 @@ u8 mhl_onoff_ex(bool onoff)
 
 		if (sii9234->pdata->hw_onoff)
 			sii9234->pdata->hw_onoff(0);
-
-#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
-	!defined(CONFIG_SAMSUNG_MHL_9290)
-		sii9234_mhl_hpd_handler_false();
-#endif
 
 #ifdef CONFIG_SAMSUNG_USE_11PIN_CONNECTOR
 #if !defined(CONFIG_MACH_P4NOTE)
@@ -648,54 +578,68 @@ void sii9234_tmds_offon_work(struct work_struct *work)
 }
 #endif
 
-static int mhl_wake_toggle(struct sii9234_data *sii9234,
-			   unsigned long high_period, unsigned long low_period)
+/* pulse_timerfunc()                                                 *
+ * This function makes hrtimer be used for generating the wake pulse.*
+ * Usleep_range() cannot guarantee the exact timing.                 */
+
+static enum hrtimer_restart pulse_timerfunc(struct hrtimer *timer)
 {
 	int ret;
+	struct sii9234_data *sii9234 = dev_get_drvdata(sii9244_mhldev);
+	unsigned long width[] = { T_SRC_WAKE_PULSE_WIDTH_1,
+		T_SRC_WAKE_PULSE_WIDTH_1, T_SRC_WAKE_PULSE_WIDTH_2,
+		T_SRC_WAKE_PULSE_WIDTH_1, T_SRC_WAKE_PULSE_WIDTH_1,
+		T_SRC_WAKE_PULSE_WIDTH_1, T_SRC_WAKE_TO_DISCOVER };
 
-	/* These bits are not documented. */
+	if (unlikely(sii9234->wp_cnt >= 7)) {
+		sii9234->wp_cnt = 0;
+		sii9234->wake_pulse_completed = 1;
+		pr_info("sii9234: %s is finished!\n", __func__);
+		wake_up(&sii9234->wq_pulse);
+		return HRTIMER_NORESTART;
+	}
+
+	hrtimer_start(&sii9234->pulse_timer,
+			ktime_set(0, NSEC_PER_MSEC * width[sii9234->wp_cnt]),
+			HRTIMER_MODE_REL);
+	if (sii9234->wp_cnt % 2 == 0) {
+		ret = mhl_tx_clear_reg(sii9234, MHL_TX_DISC_CTRL7_REG,
+					(1 << 7) | (1 << 6));
+		if (ret < 0)
+			return HRTIMER_NORESTART;
+	} else {
+		ret = mhl_tx_set_reg(sii9234, MHL_TX_DISC_CTRL7_REG,
+				(1 << 7) | (1 << 6));
+		if (ret < 0)
+			return HRTIMER_NORESTART;
+	}
+	sii9234->wp_cnt++;
+	return HRTIMER_NORESTART;
+}
+static int mhl_send_wake_pulses(struct sii9234_data *sii9234)
+{
+
+	int ret;
+	sii9234->wp_cnt = 0;
+	sii9234->wake_pulse_completed = 0;
+	hrtimer_start(&sii9234->pulse_timer,
+			ktime_set(0,  NSEC_PER_MSEC * T_SRC_WAKE_PULSE_WIDTH_1),
+			HRTIMER_MODE_REL);
 	ret =
 	    mhl_tx_set_reg(sii9234, MHL_TX_DISC_CTRL7_REG, (1 << 7) | (1 << 6));
 	if (ret < 0)
 		return ret;
-
-	usleep_range(high_period * USEC_PER_MSEC, high_period * USEC_PER_MSEC);
-
-	ret =
-	    mhl_tx_clear_reg(sii9234, MHL_TX_DISC_CTRL7_REG,
-			     (1 << 7) | (1 << 6));
-	if (ret < 0)
-		return ret;
-
-	usleep_range(low_period * USEC_PER_MSEC, low_period * USEC_PER_MSEC);
-
-	return 0;
-}
-
-static int mhl_send_wake_pulses(struct sii9234_data *sii9234)
-{
-	int ret;
-
-	ret = mhl_wake_toggle(sii9234, T_SRC_WAKE_PULSE_WIDTH_1,
-			      T_SRC_WAKE_PULSE_WIDTH_1);
-	if (ret < 0)
-		return ret;
-
-	ret = mhl_wake_toggle(sii9234, T_SRC_WAKE_PULSE_WIDTH_1,
-			      T_SRC_WAKE_PULSE_WIDTH_2);
-	if (ret < 0)
-		return ret;
-
-	ret = mhl_wake_toggle(sii9234, T_SRC_WAKE_PULSE_WIDTH_1,
-			      T_SRC_WAKE_PULSE_WIDTH_1);
-	if (ret < 0)
-		return ret;
-
-	ret = mhl_wake_toggle(sii9234, T_SRC_WAKE_PULSE_WIDTH_1,
-			      T_SRC_WAKE_TO_DISCOVER);
-	if (ret < 0)
-		return ret;
-
+	ret = wait_event_timeout(sii9234->wq_pulse,
+				 sii9234->wake_pulse_completed == 1,
+				 msecs_to_jiffies(T_WAIT_TIMEOUT_WAKE_PULSE));
+	if (ret == 0) {
+		pr_err("[ERROR] %s time out!\n", __func__);
+		return -1;
+	}
+	if (sii9234->wake_pulse_completed != 1) {
+		pr_err("[ERROR] %s was not finished!\n", __func__);
+		return -1;
+	}
 	return 0;
 }
 
@@ -1536,10 +1480,6 @@ static void goto_d3(void)
 
 	sii9234->rsen = false;
 
-#if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
-	!defined(CONFIG_SAMSUNG_MHL_9290)
-		sii9234_mhl_hpd_handler_false();
-#endif
 	memset(cbus_pkt_buf, 0x00, sizeof(cbus_pkt_buf));
 
 	ret = sii9234_power_init(sii9234);
@@ -2559,7 +2499,7 @@ static int sii9234_30pin_reg_init_for_9290(struct sii9234_data *sii9234)
 	ret = mhl_tx_write_reg(sii9234, 0xA1, 0xFC);
 	if (ret < 0)
 		return ret;
-#ifdef	CONFIG_MACH_P4NOTE
+#ifdef CONFIG_MACH_P4NOTE
 	ret = mhl_tx_write_reg(sii9234, 0xA3, 0xC0);	/*output swing level*/
 	if (ret < 0)
 		return ret;
@@ -3657,6 +3597,7 @@ static ssize_t sysfs_check_mhl_command(struct class *class,
 				       struct class_attribute *attr, char *buf)
 {
 	int size;
+	int ret;
 	u8 sii_id = 0;
 	struct sii9234_data *sii9234 = dev_get_drvdata(sii9244_mhldev);
 
@@ -3666,7 +3607,11 @@ static ssize_t sysfs_check_mhl_command(struct class *class,
 	if (sii9234->pdata->hw_reset)
 		sii9234->pdata->hw_reset();
 
-	mhl_tx_read_reg(sii9234, MHL_TX_IDH_REG, &sii_id);
+	ret = mhl_tx_read_reg(sii9234, MHL_TX_IDH_REG, &sii_id);
+	if (unlikely(ret < 0))
+		pr_err("[ERROR] %s(): Failed to read register"
+			" MHL_TX_IDH_REG!\n", __func__);
+
 	pr_info("sii9234 : sel_show sii_id: %X\n", sii_id);
 
 	if (sii9234->pdata->hw_onoff)
@@ -3965,7 +3910,6 @@ static int __devinit sii9234_mhl_tx_i2c_probe(struct i2c_client *client,
 
 	init_waitqueue_head(&sii9234->wq);
 	mutex_init(&sii9234->lock);
-	mutex_init(&sii9234_irq_lock);
 	mutex_init(&sii9234->cbus_lock);
 
 #ifdef __SII9234_MUTEX_DEBUG__
@@ -4120,8 +4064,14 @@ static int __devinit sii9234_mhl_tx_i2c_probe(struct i2c_client *client,
 #endif
 #if defined(CONFIG_SAMSUNG_WORKAROUND_HPD_GLANCE) &&\
 	!defined(CONFIG_SAMSUNG_MHL_9290)
-	atomic_set(&sched_hpd_handler_false, 0);
+	is_mhl_power_state_on = sii9234_is_mhl_power_state_on;
 #endif
+	init_waitqueue_head(&sii9234->wq_pulse);
+	hrtimer_init(&sii9234->pulse_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	sii9234->pulse_timer.function = pulse_timerfunc;
+	sii9234->wp_cnt = 0;
+	sii9234->wake_pulse_completed = 0;
+
 	return 0;
 
 #ifdef CONFIG_EXTCON
