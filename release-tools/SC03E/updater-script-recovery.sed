@@ -2,7 +2,7 @@ ui_print("");
 ui_print("");
 ui_print("------------------------------------------------");
 ui_print("@VERSION");
-ui_print("  KBC Developer:");
+ui_print("  KBC Developers:");
 ui_print("    HomuHomu");
 ui_print("    Ma34s");
 ui_print("    Sakuramilk");
