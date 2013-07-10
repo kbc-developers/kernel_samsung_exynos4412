@@ -13,6 +13,10 @@ copy_ramdisk()
     rm -rf $DST_DIR/.git
     find $DST_DIR -name .gitkeep | xargs rm --force
     find $DST_DIR -name .gitignore | xargs rm --force
+
+    if [ -f $DST_DIR/recovery_version ]; then
+        rm -f $DST_DIR/recovery_version
+    fi
 }
 
 make_boot_image()
