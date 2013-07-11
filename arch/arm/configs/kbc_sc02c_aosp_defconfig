@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.82 Kernel Configuration
+# Linux/arm 3.0.85 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -549,6 +549,7 @@ CONFIG_BT_MGMT=y
 # CONFIG_QC_MODEM_MDM9X15 is not set
 # CONFIG_MDM_HSIC_PM is not set
 # CONFIG_EMI_ERROR_RECOVERY is not set
+# CONFIG_SIM_DETECT is not set
 CONFIG_USB_CDFS_SUPPORT=y
 CONFIG_SAMSUNG_PRODUCT_SHIP=y
 # CONFIG_CORESIGHT_ETM is not set
@@ -1316,7 +1317,6 @@ CONFIG_LINK_DEVICE_HSIC=y
 # CONFIG_WORKQUEUE_FRONT is not set
 # CONFIG_IPC_CMC22x_OLD_RFS is not set
 # CONFIG_SIPC_VER_5 is not set
-# CONFIG_SIM_DETECT is not set
 # CONFIG_SIM_SLOT_SWITCH is not set
 # CONFIG_LTE_MODEM_CMC220 is not set
 # CONFIG_INTERNAL_MODEM_IF is not set
@@ -2769,6 +2769,7 @@ CONFIG_ACCESSORY=y
 # CONFIG_IR_REMOCON is not set
 # CONFIG_EXTCON is not set
 # CONFIG_BARCODE_EMUL is not set
+# CONFIG_SAMSUNG_PHONE_TTY is not set
 CONFIG_IOMMU_SUPPORT=y
 # CONFIG_FELICA is not set
 # CONFIG_FELICA_NO_SECURE is not set
