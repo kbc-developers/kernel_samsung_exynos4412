@@ -92,6 +92,8 @@ if [ "$USE_INITRAMFS" = 'y' ]; then
   $CROSS_COMPILE$STRIP --strip-unneeded $BOOT_RAMDISK_TMP_DIR/lib/modules/*
 else
   find -name '*.ko' -exec cp -av {} $RAMDISK_TMP_DIR/lib/modules/ \;
+  STRIP=strip
+  $CROSS_COMPILE$STRIP --strip-unneeded $RAMDISK_TMP_DIR/lib/modules/*
 fi
 
 if [ "$USE_INITRAMFS" = 'y' ]; then
