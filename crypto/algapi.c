@@ -910,13 +910,13 @@ EXPORT_SYMBOL_GPL(crypto_xor);
 
 static int __init crypto_algapi_init(void)
 {
-	crypto_init_proc();
+	/*crypto_init_proc(); //Moved to testmgr*/
 	return 0;
 }
 
 static void __exit crypto_algapi_exit(void)
 {
-	crypto_exit_proc();
+	/*crypto_init_proc(); //Moved to testmgr*/
 }
 
 module_init(crypto_algapi_init);
