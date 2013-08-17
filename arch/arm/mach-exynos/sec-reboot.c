@@ -124,7 +124,8 @@ static void sec_reboot(char str, const char *cmd)
 			writel(REBOOT_MODE_PREFIX | REBOOT_MODE_FOTA_BL,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "recovery"))
-#ifdef CONFIG_MACH_T0_JPN_LTE_DCM
+#if 0 //#ifdef CONFIG_MACH_T0_JPN_LTE_DCM
+//this is for msb test only!
 			writel(REBOOT_MODE_PREFIX | REBOOT_MODE_FOTA,
 			       S5P_INFORM3);
 		else if (!strcmp(cmd, "recovery3e"))
