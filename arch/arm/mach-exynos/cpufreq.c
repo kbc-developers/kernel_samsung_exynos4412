@@ -712,10 +712,8 @@ static int exynos_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	int ret;
 
 	policy->cur = policy->min = policy->max =
+		policy->max_suspend = policy->min_suspend =
 			exynos_getspeed(policy->cpu);
-#ifdef CONFIG_CPU_FREQ_PM
-	policy->max_suspend = policy->min_suspend = policy->cur;
-#endif
 
 	cpufreq_frequency_table_get_attr(exynos_info->freq_table, policy->cpu);
 
@@ -740,14 +738,14 @@ static int exynos_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	/* Safe default startup limits */
 #ifdef CONFIG_CPU_EXYNOS4412
 	policy->max = 1600000;
+#elif CONFIG_EXYNOS4210_1400MHZ_SUPPORT
+	policy->max = 1400000;
 #else
 	policy->max = 1200000;
 #endif
 	policy->min = 200000;
-#ifdef CONFIG_CPU_FREQ_PM
 	policy->max_suspend = 500000;
 	policy->min_suspend = 200000;
-#endif
 
 	return ret;
 }
