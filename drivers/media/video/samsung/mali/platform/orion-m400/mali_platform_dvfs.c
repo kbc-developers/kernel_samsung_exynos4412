@@ -67,8 +67,8 @@ mali_dvfs_staycount_table mali_dvfs_staycount[MALI_DVFS_STEPS]={
 /*dvfs threshold*/
 mali_dvfs_threshold_table mali_dvfs_threshold[MALI_DVFS_STEPS]={
     /*step 0*/{((int)((255*0)/100))   ,((int)((255*85)/100))},
-    /*step 1*/{((int)((255*80)/100))  ,((int)((255*90)/100))},
-    /*step 2*/{((int)((255*80)/100))  ,((int)((255*100)/100))} };
+    /*step 1*/{((int)((255*75)/100))  ,((int)((255*85)/100))},
+    /*step 2*/{((int)((255*75)/100))  ,((int)((255*100)/100))} };
 
 /*dvfs status*/
 mali_dvfs_currentstatus maliDvfsStatus;
@@ -76,7 +76,11 @@ int mali_dvfs_control=0;
 
 /*dvfs table*/
 mali_dvfs_table mali_dvfs[MALI_DVFS_STEPS]={
+#ifdef CONFIG_EXYNOS4210_1400MHZ_SUPPORT
+			/*step 0*/{134  ,1000000    , 950000},
+#else
 			/*step 0*/{100  ,1000000    , 950000},
+#endif
 			/*step 1*/{160  ,1000000    , 950000},
 			/*step 2*/{267  ,1000000    ,1000000} };
 
@@ -84,10 +88,9 @@ mali_dvfs_table mali_dvfs[MALI_DVFS_STEPS]={
 
 #define ASV_8_LEVEL 8
 #define ASV_5_LEVEL 5
-#define ASV_LEVEL_SUPPORT 0
 
 static unsigned int asv_3d_volt_5_table[ASV_5_LEVEL][MALI_DVFS_STEPS] = {
-	/* L3 (100MHz) L2(160MHz), L1(267MHz) */
+	/* L3 (100/134MHz) L2(160MHz), L1(267MHz) */
 	{1000000, 1000000, 1100000},	/* S */
 	{1000000, 1000000, 1100000},	/* A */
 	{ 950000,  950000, 1000000},	/* B */
@@ -96,7 +99,7 @@ static unsigned int asv_3d_volt_5_table[ASV_5_LEVEL][MALI_DVFS_STEPS] = {
 };
 
 static unsigned int asv_3d_volt_8_table[ASV_8_LEVEL][MALI_DVFS_STEPS] = {
-	/* L3 (100MHz) L2(160MHz), L1(267MHz) */
+	/* L3 (100/134MHz) L2(160MHz), L1(267MHz) */
 	{1000000, 1000000, 1100000},	/* SS */
 	{1000000, 1000000, 1100000},	/* A1 */
 	{1000000, 1000000, 1100000},	/* A2 */
@@ -269,16 +272,18 @@ static unsigned int decideNextStatus(unsigned int utilization)
 static mali_bool mali_dvfs_table_update(void)
 {
 	unsigned int exynos_result_of_asv_group;
+	unsigned int target_asv;
 	unsigned int i;
 	exynos_result_of_asv_group = exynos_result_of_asv & 0xf;
-	MALI_PRINT(("exynos_result_of_asv_group = 0x%x\n", exynos_result_of_asv_group));
+	target_asv = exynos_result_of_asv >> 28;
+	MALI_PRINT(("exynos_result_of_asv_group = 0x%x, target_asv = 0x%x\n", exynos_result_of_asv_group, target_asv));
 
-	if (ASV_LEVEL_SUPPORT) { //asv level information will be added.
+	if (target_asv == 0x8) { //SUPPORT_1400MHZ
 		for (i = 0; i < MALI_DVFS_STEPS; i++) {
 			mali_dvfs[i].vol = asv_3d_volt_5_table[exynos_result_of_asv_group][i];
 			MALI_PRINT(("mali_dvfs[%d].vol = %d\n", i, mali_dvfs[i].vol));
 		}
-	} else {
+	} else if (target_asv == 0x4){ //SUPPORT_1200MHZ
 		for (i = 0; i < MALI_DVFS_STEPS; i++) {
 			mali_dvfs[i].vol = asv_3d_volt_8_table[exynos_result_of_asv_group][i];
 			MALI_PRINT(("mali_dvfs[%d].vol = %d\n", i, mali_dvfs[i].vol));
