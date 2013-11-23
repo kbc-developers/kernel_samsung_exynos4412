@@ -442,6 +442,11 @@ static int exynos4_check_operation(void)
 
 	if (check_usb_op())
 		return 1;
+	
+#if defined(CONFIG_ISDBT)
+	if (check_isdbt_op())
+		return 1;
+#endif
 
 #if defined(CONFIG_ISDBT)
 	if (check_isdbt_op())

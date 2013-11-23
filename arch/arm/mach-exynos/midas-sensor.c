@@ -156,7 +156,11 @@ static int stm_get_position(void)
 	int position = 0;
 
 #if defined(CONFIG_MACH_M3) /* C2_SPR, M3 */
-		position = 2; /* top/lower-right */
+#if defined(CONFIG_MACH_M3_JPN_DCM)
+	position = 4;	/*top/lower-left*/
+#else
+	position = 2; /* top/lower-right */
+#endif
 #elif defined(CONFIG_MACH_M0_CMCC)
 	if (system_rev == 2)
 		position = 0; /* top/upper-left */

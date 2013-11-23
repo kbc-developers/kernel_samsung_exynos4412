@@ -227,6 +227,32 @@ extern struct ctl_table epoll_table[];
 int sysctl_legacy_va_layout;
 #endif
 
+#if defined(CONFIG_BUILD_TARGET_SAMSUNG)
+int sysctl_build_target = 0;
+#elif defined(CONFIG_BUILD_TARGET_AOSP)
+int sysctl_build_target = 1;
+#elif defined(CONFIG_BUILD_TARGET_MULTI)
+int sysctl_build_target = 2;
+#endif
+int sysctl_safe_mode = 0;
+int sysctl_boot_completed = 0;
+unsigned int sysctl_feature_aosp = 0;
+
+static int proc_feature_aosp(struct ctl_table *table, int write, void __user *buffer, size_t *lenp, loff_t *ppos)
+{
+	int error;
+
+	error = proc_dointvec(table, write, buffer, lenp, ppos);
+	if (error)
+		return error;
+
+	if (write) {
+		printk("Initializing USB with build_target: %d\n", sysctl_feature_aosp);
+		//late_init_android_gadget(sysctl_feature_aosp);
+	}
+	return 0;
+}
+
 /* The default sysctl tables: */
 
 static struct ctl_table root_table[] = {
@@ -985,6 +1011,34 @@ static struct ctl_table kern_table[] = {
 		.proc_handler	= proc_dointvec,
 	},
 #endif
+	{
+		.procname	= "build_target",
+		.data		= &sysctl_build_target,
+		.maxlen		= sizeof(int),
+		.mode		= 0444,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "safe_mode",
+		.data		= &sysctl_safe_mode,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "boot_completed",
+		.data		= &sysctl_boot_completed,
+		.maxlen		= sizeof(int),
+		.mode		= 0666,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "feature_aosp",
+		.data		= &sysctl_feature_aosp,
+		.maxlen		= sizeof(unsigned int),
+		.mode		= 0644,
+		.proc_handler	= proc_feature_aosp,
+	},
 	{ }
 };
 

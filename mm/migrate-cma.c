@@ -540,7 +540,7 @@ static int __migrate_page(struct address_space *mapping,
 int migrate_page(struct address_space *mapping,
 		 struct page *newpage, struct page *page, enum migrate_mode mode)
 {
-  return __migrate_page(mapping, newpage, page, mode, 0, 0);
+	return __migrate_page(mapping, newpage, page, mode, 0, 0);
 }
 EXPORT_SYMBOL(migrate_page);
 
@@ -557,7 +557,7 @@ int buffer_migrate_page(struct address_space *mapping,
 	int rc;
 
 	if (!page_has_buffers(page))
-	  return migrate_page(mapping, newpage, page, mode);
+		return migrate_page(mapping, newpage, page, mode);
 
 	head = page_buffers(page);
 
@@ -721,40 +721,57 @@ static int move_to_new_page(struct page *newpage, struct page *page,
 
 	mapping = page_mapping(page);
 	if (!mapping) {
-	  rc = __migrate_page(mapping, newpage, page, mode, pass, tries);
+		rc = __migrate_page(mapping, newpage, page, mode, pass, tries);
 		if (rc) {
 			if (is_failed_page(page, pass, tries)) {
 				printk("%s[%d]: 1 ", __func__, __LINE__);
 				dump_page(page);
 			}
 		}
-	} else if (mapping->a_ops->migratepage) {
-	  /*
-	   * Most pages have a mapping and most filesystems
-	   * should provide a migration function. Anonymous
-	   * pages are part of swap space which also has its
-	   * own migration function. This is the most common
-	   * path for page migration.
-	   */
-	  rc = mapping->a_ops->migratepage(mapping,
-					   newpage, page, mode);
-	  if (rc) {
-	    if (is_failed_page(page, pass, tries)) {
-	      printk(KERN_ERR "%s[%d]: 3 ",
-		     __func__, __LINE__);
-	      dump_page(page);
-	    }
-	  }
-	} else	{
-	  rc = fallback_migrate_page(mapping, newpage, page, mode,
-				     pass, tries);
-	  if (rc) {
-	    if (is_failed_page(page, pass, tries)) {
-	      printk(KERN_ERR "%s[%d]: 4 ",
-		     __func__, __LINE__);
-	      dump_page(page);
-	    }
-	  }
+	} else {
+		/*
+		 * Do not writeback pages if !sync and migratepage is
+		 * not pointing to migrate_page() which is nonblocking
+		 * (swapcache/tmpfs uses migratepage = migrate_page).
+		 */
+		if (PageDirty(page) && !sync &&
+		    mapping->a_ops->migratepage != migrate_page) {
+			rc = -EBUSY;
+			if (rc) {
+				if (is_failed_page(page, pass, tries)) {
+					printk(KERN_ERR "%s[%d]: 2 ",
+							 __func__, __LINE__);
+					dump_page(page);
+				}
+			}
+		} else if (mapping->a_ops->migratepage) {
+			/*
+			 * Most pages have a mapping and most filesystems
+			 * should provide a migration function. Anonymous
+			 * pages are part of swap space which also has its
+			 * own migration function. This is the most common
+			 * path for page migration.
+			 */
+			rc = mapping->a_ops->migratepage(mapping,
+							newpage, page, mode);
+			if (rc) {
+				if (is_failed_page(page, pass, tries)) {
+					printk(KERN_ERR "%s[%d]: 3 ",
+							__func__, __LINE__);
+					dump_page(page);
+				}
+			}
+		} else	{
+			rc = fallback_migrate_page(mapping, newpage, page, mode,
+							 pass, tries);
+			if (rc) {
+				if (is_failed_page(page, pass, tries)) {
+					printk(KERN_ERR "%s[%d]: 4 ",
+							__func__, __LINE__);
+					dump_page(page);
+				}
+			}
+		}
 	}
 
 	if (rc) {

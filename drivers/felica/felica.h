@@ -33,10 +33,7 @@
 /******************************************************************************
  * log
  ******************************************************************************/
-
 /*#define FELICA_DEBUG*/
-
-
 
 
 
@@ -91,7 +88,7 @@ static void __exit felica_exit(void);
 #define FELICA_NL_REQ_SYNC				0x06
 #define FELICA_NL_RESPONCE				0xFE
 #define FELICA_NL_CONNECT_MSG			0xFF
-#define FELICA_NL_MSG_DATA_SIZE			4096
+#define FELICA_NL_MSG_DATA_SIZE			4096*4
 #define FELICA_NL_MSG_SIZE			(FELICA_NL_MSG_DATA_SIZE+4)
 
 #define MSG_READ1_FLAGS_OFFSET			1
@@ -137,9 +134,11 @@ static void felica_nl_recv_msg(struct sk_buff *skb);
 static void felica_nl_wait_ret_msg(void);
 static void felica_set_felica_info(void);
 
+#ifndef CONFIG_FELICA_NO_SECURE
 static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val);
 static int felica_Cpu0(void);
 static int felica_CpuAll(void);
+#endif
 static uint8_t felica_get_tamper_fuse_cmd(void);
 
 

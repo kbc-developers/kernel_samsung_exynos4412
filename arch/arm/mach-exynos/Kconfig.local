@@ -116,6 +116,7 @@ config MACH_T0_KOR_LGT
 
 config MACH_T0_JPN_LTE_DCM
 	bool "JPN LTE DCM T0"
+	select MACH_T0_LTE
 
 config MACH_T0_CHN_OPEN
 	bool "CHN OPEN"

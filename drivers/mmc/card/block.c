@@ -2599,6 +2599,9 @@ static int mmc_blk_probe(struct mmc_card *card)
 		goto out;
 #endif
 
+	if (mmc_blk_alloc_parts(card, md))
+		goto out;
+
 	mmc_set_drvdata(card, md);
 	mmc_fixup_device(card, blk_fixups);
 

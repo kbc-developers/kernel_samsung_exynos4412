@@ -73,28 +73,6 @@ int wacom_i2c_flash_cmd(struct wacom_i2c *wac_i2c)
 
 	int ret, len, i;
 	u8 buf[10], flashq;
-	
-#if defined(CONFIG_MACH_KONA)
-	buf[0] = 0x0d;
-	buf[1] = FLASH_START0;
-	buf[2] = FLASH_START1;
-	buf[3] = FLASH_START2;
-	buf[4] = FLASH_START3;
-	buf[5] = FLASH_START4;
-	buf[6] = FLASH_START5;
-	buf[7] = 0x0d;
-
-	printk(KERN_DEBUG "[E-PEN][jjals] w9002 running!!\n");
-
-	len = 8;
-	ret = i2c_master_send(wac_i2c->client, buf, len);
-
-	if (ret < 0) {
-		printk(KERN_ERR
-			"Sending flash command failed\n");
-		return -1;
-	}
-#else
 
 	buf[0] = 0x0d;
 	buf[1] = FLASH_START0;
@@ -132,7 +110,8 @@ int wacom_i2c_flash_cmd(struct wacom_i2c *wac_i2c)
 		printk(KERN_DEBUG "[E-PEN]: flash send?:%d\n", ret);
 		msleep(270);
 	}
-#endif
+
+	wac_i2c->boot_mode = true;
 
 	return 0;
 }
@@ -195,9 +174,6 @@ int wacom_i2c_flash_enter(struct wacom_i2c *wac_i2c)
 {
 	if (wacom_i2c_flash_query(wac_i2c, FLASH_QUERY, FLASH_ACK) == -1)
 		return ERR_NOT_FLASH;
-	
-        wac_i2c->boot_mode = true;
-
 	return 0;
 }
 
@@ -570,6 +546,17 @@ int wacom_i2c_flash(struct wacom_i2c *wac_i2c)
 	}
 #endif
 
+#ifdef WACOM_HAVE_FWE_PIN
+	if (wac_i2c->have_fwe_pin) {
+		wac_i2c->wac_pdata->compulsory_flash_mode(true);
+#ifdef CONFIG_MACH_T0
+		/*Reset*/
+		wac_i2c->wac_pdata->reset_platform_hw();
+		msleep(200);
+#endif
+		printk(KERN_DEBUG"[E-PEN] Set FWE\n");
+	}
+#endif
 	wake_lock(&wac_i2c->wakelock);
 
 	ret = wacom_i2c_flash_cmd(wac_i2c);
@@ -669,6 +656,18 @@ mcu_type_error:
 
 fw_update_error:
 	wake_unlock(&wac_i2c->wakelock);
+#ifdef WACOM_HAVE_FWE_PIN
+	if (wac_i2c->have_fwe_pin) {
+		wac_i2c->wac_pdata->compulsory_flash_mode(false);
+#ifdef CONFIG_MACH_T0
+		/*Reset*/
+		wac_i2c->wac_pdata->reset_platform_hw();
+		msleep(200);
+#endif
+		printk(KERN_DEBUG"[E-PEN] Release FWE\n");
+	}
+#endif
+
 	return ret;
 }
 
