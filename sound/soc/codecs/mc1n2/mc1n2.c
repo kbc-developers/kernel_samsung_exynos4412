@@ -5171,12 +5171,12 @@ static int __init mc1n2_init(void)
 	if (device_create_file(sound_mc1n2, &dev_attr_update_volume)< 0) {
 		printk(KERN_ERR "Failed to create device file(%s)!\n", dev_attr_update_volume.attr.name);
 	}
-#endif /* CONFIG_SND_TWEAK_HW_VOLUME */
 #ifdef CONFIG_SND_FREQ_LOCK
 	if (device_create_file(sound_mc1n2, &dev_attr_freq_lock)< 0) {
 		printk(KERN_ERR "Failed to create device file(%s)!\n", dev_attr_freq_lock.attr.name);
 	}
 #endif /* CONFIG_SND_FREQ_LOCK */
+#endif /* CONFIG_SND_TWEAK_HW_VOLUME */
 	return i2c_add_driver(&mc1n2_i2c_driver);
 }
 module_init(mc1n2_init);
