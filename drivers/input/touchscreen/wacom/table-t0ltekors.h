@@ -17,6 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _LINUX_WACOM_I2C_TABLE_T0LTEKOR_H
+#define _LINUX_WACOM_I2C_TABLE_T0LTEKOR_H
 
 #if defined(CONFIG_MACH_T0_KOR_SKT)
 short TblX_CCW_LLeft_44[] = {
@@ -128,3 +130,5 @@ short tilt_offsetY[MAX_HAND][MAX_ROTATION] = \
 	{{45, -5, -40, 10, }, {10, 45, -5, -40, } };
 
 #endif
+
+#endif /* _LINUX_WACOM_I2C_TABLE_T0LTEKOR_H */

@@ -116,9 +116,8 @@ struct finger_info {
 	int w_max;
 	int z;
 	int status;
-        int angle;
-        int width;
-
+    int angle;
+    int width;
 };
 
 struct finger_data {

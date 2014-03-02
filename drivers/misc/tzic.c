@@ -42,17 +42,14 @@ u32 exynos_smc1(u32 cmd, u32 arg1, u32 arg2, u32 arg3)
 	register u32 reg3 __asm__("r3") = arg3;
 
 	__asm__ volatile (
-#ifdef REQUIRES_SEC
-		".arch_extension sec\n"
-#endif
-		"smc	0\n"
-		: "+r"(reg0), "+r"(reg1), "+r"(reg2), "+r"(reg3)
+	".arch_extension sec\n"
+	"smc	0\n"
+	: "+r"(reg0), "+r"(reg1), "+r"(reg2), "+r"(reg3)
 	);
 
 	return reg0;
 }
 
-#if defined(CONFIG_FELICA)
 int exynos_smc_read_oemflag(u32 ctrl_word, u32 *val)
 {
 	register u32 reg0 __asm__("r0");
@@ -67,13 +64,9 @@ int exynos_smc_read_oemflag(u32 ctrl_word, u32 *val)
 		reg2 = idx;
 
 		__asm__ volatile (
-#ifdef REQUIRES_SEC
-			".arch_extension sec\n"
-#endif
-			"smc    0\n"
-			:"+r" (reg0), "+r"(reg1),
-				  "+r"(reg2), "+r"(reg3)
-		    );
+		".arch_extension sec\n"
+		"smc    0\n" : "+r" (reg0), "+r"(reg2), "+r"(reg3)
+		);
 		if (reg1)
 			return -1;
 	}
@@ -83,13 +76,9 @@ int exynos_smc_read_oemflag(u32 ctrl_word, u32 *val)
 	reg2 = idx;
 
 	__asm__ volatile (
-#ifdef REQUIRES_SEC
-			".arch_extension sec\n"
-#endif
-			"smc    0\n"
-			:"+r" (reg0), "+r"(reg1), "+r"(reg2),
-			  "+r"(reg3)
-	    );
+	".arch_extension sec\n"
+	"smc    0\n" : "+r" (reg0), "+r"(reg1), "+r"(reg2), "+r"(reg3)
+	);
 	if (reg1)
 		return -1;
 
@@ -97,7 +86,6 @@ int exynos_smc_read_oemflag(u32 ctrl_word, u32 *val)
 
 	return 0;
 }
-#endif
 
 static DEFINE_MUTEX(tzic_mutex);
 static struct class *driver_class;
@@ -125,11 +113,7 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 		exynos_smc1(SMC_CMD_STORE_BINFO, 0x00000001, 0, 0);
 	} else if (cmd == TZIC_IOCTL_GET_FUSE_REQ) {
 		LOG(KERN_INFO "get_fuse");
-#if defined(CONFIG_FELICA)
 		exynos_smc_read_oemflag(0x80010001, (u32 *) arg);
-#else
-		LOG(KERN_INFO "get_fuse not supported : CONFIG_FELICA");
-#endif
 	} else {
 		LOG(KERN_INFO "command error");
 	}

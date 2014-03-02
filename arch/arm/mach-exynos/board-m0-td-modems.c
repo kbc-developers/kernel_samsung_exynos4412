@@ -61,7 +61,7 @@ static struct modem_io_t tdscdma_io_devices[] = {
 #ifdef CONFIG_SLP
 		.name = "pdp0",
 #else
-		.name = "td_rmnet0",
+		.name = "rmnet0",
 #endif
 		.id = 0x2A,
 		.format = IPC_RAW,
@@ -72,7 +72,7 @@ static struct modem_io_t tdscdma_io_devices[] = {
 #ifdef CONFIG_SLP
 		.name = "pdp1",
 #else
-		.name = "td_rmnet1",
+		.name = "rmnet1",
 #endif
 		.id = 0x2B,
 		.format = IPC_RAW,
@@ -83,7 +83,7 @@ static struct modem_io_t tdscdma_io_devices[] = {
 #ifdef CONFIG_SLP
 		.name = "pdp2",
 #else
-		.name = "td_rmnet2",
+		.name = "rmnet2",
 #endif
 		.id = 0x2C,
 		.format = IPC_RAW,
@@ -120,23 +120,27 @@ static struct modem_io_t tdscdma_io_devices[] = {
 	},
 };
 
+static struct modemlink_pm_data modem_link_pm_data = {
+	.name = "td_link_pm",
+	.gpio_link_enable = 0,
+};
+
 /* To get modem state, register phone active irq using resource */
 static struct resource tdscdma_modem_res[] = {
 };
 
 static struct modem_data tdscdma_modem_data = {
 	.name = "sprd8803",
-
-	.gpio_cp_on = GPIO_TD_PHONE_ON,
-	.gpio_pda_active = GPIO_TD_PDA_ACTIVE,
-	.gpio_phone_active = GPIO_TD_PHONE_ACTIVE,
-	.gpio_cp_dump_int = GPIO_TD_DUMP_INT,
-	.gpio_ap_cp_int1 = GPIO_AP_TD_INT1,
-	.gpio_ap_cp_int2 = GPIO_AP_TD_INT2,
-	.gpio_ipc_mrdy = GPIO_IPC_MRDY,
-	.gpio_ipc_srdy = GPIO_IPC_SRDY,
-	.gpio_ipc_sub_mrdy = GPIO_IPC_SUB_MRDY,
-	.gpio_ipc_sub_srdy = GPIO_IPC_SUB_SRDY,
+    .gpio_cp_on = GPIO_PHONE_ON,
+    .gpio_pda_active = GPIO_PDA_ACTIVE,
+    .gpio_phone_active = GPIO_PHONE_ACTIVE,
+    .gpio_cp_dump_int = GPIO_CP_DUMP_INT,
+    .gpio_ap_cp_int1 = GPIO_AP_CP_INT1,
+    .gpio_ap_cp_int2 = GPIO_AP_CP_INT2,
+    .gpio_ipc_mrdy = GPIO_IPC_MRDY,
+    .gpio_ipc_srdy = GPIO_IPC_SRDY,
+    .gpio_ipc_sub_mrdy = GPIO_IPC_SUB_MRDY,
+    .gpio_ipc_sub_srdy = GPIO_IPC_SUB_SRDY,
 #ifdef CONFIG_SEC_DUAL_MODEM_MODE
 	.gpio_sim_io_sel = GPIO_SIM_IO_SEL,
 	.gpio_cp_ctrl1 = GPIO_CP_CTRL1,
@@ -148,6 +152,8 @@ static struct modem_data tdscdma_modem_data = {
 
 	.num_iodevs = ARRAY_SIZE(tdscdma_io_devices),
 	.iodevs = tdscdma_io_devices,
+
+	.link_pm_data = &modem_link_pm_data,
 };
 
 /* if use more than one modem device, then set id num */
@@ -173,6 +179,7 @@ static void tdscdma_modem_cfg_gpio(void)
 	unsigned gpio_ipc_srdy = tdscdma_modem_data.gpio_ipc_srdy;
 	unsigned gpio_ipc_sub_mrdy = tdscdma_modem_data.gpio_ipc_sub_mrdy;
 	unsigned gpio_ipc_sub_srdy = tdscdma_modem_data.gpio_ipc_sub_srdy;
+	unsigned gpio_ap_cp_int2 = tdscdma_modem_data.gpio_ap_cp_int2;
 #ifdef CONFIG_SEC_DUAL_MODEM_MODE
 	unsigned gpio_sim_io_sel = tdscdma_modem_data.gpio_sim_io_sel;
 	unsigned gpio_cp_ctrl1 = tdscdma_modem_data.gpio_cp_ctrl1;
@@ -298,6 +305,16 @@ static void tdscdma_modem_cfg_gpio(void)
 
 			irq_set_irq_type(gpio_to_irq(gpio_ipc_sub_srdy),
 				IRQ_TYPE_EDGE_RISING);
+		}
+	}
+
+	if (gpio_ap_cp_int2) {
+		err = gpio_request(gpio_ap_cp_int2, "AP_CP_INT2");
+		if (err) {
+			printk(KERN_ERR "ipc_spi_cfg_gpio - fail to request gpio %s : %d\n",
+				"AP_CP_INT2", err);
+		} else {
+			gpio_direction_output(gpio_ap_cp_int2, 0);
 		}
 	}
 

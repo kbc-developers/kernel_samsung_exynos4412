@@ -22,7 +22,7 @@
 unsigned char *Binary;
 bool ums_binary;
 
-#if defined(CONFIG_MACH_P4NOTE)
+#if defined(CONFIG_MACH_P4NOTE) || defined(CONFIG_MACH_SP7160LTE)
 const unsigned int Binary_nLength = 0xBFFF;
 const unsigned char Mpu_type = 0x22;
 const unsigned int Firmware_version_of_file = 0x22F;
@@ -57,18 +57,24 @@ char Firmware_checksum[] = { 0x1F, 0xAA, 0x40, 0x78, 0x48, };
 
 /*JPN*/
 #elif defined(CONFIG_MACH_T0_JPN_LTE_DCM)
-unsigned int Firmware_version_of_file = 0x312;
+unsigned int Firmware_version_of_file = 0x310;
 unsigned char *firmware_name = "epen/W9001_B746JD.bin";
-char Firmware_checksum[] = { 0x1F, 0x37, 0x28, 0xC8, 0x7C, };
+char Firmware_checksum[] = { 0x1F, 0x81, 0x72, 0xDC, 0x5E, };
 
 /*USA*/
 #elif defined(CONFIG_MACH_T0_USA_VZW) \
-	|| defined(CONFIG_MACH_T0_USA_SPR) \
-	|| defined(CONFIG_MACH_T0_USA_USCC)
+	|| defined(CONFIG_MACH_T0_USA_SPR)
 unsigned int Firmware_version_of_file = 0x602;
 unsigned char *firmware_name = "epen/W9001_B746VZW.bin";
 
 char Firmware_checksum[] = { 0x1F, 0x46, 0xB1, 0x68, 0x88, };
+
+/*USA*/
+#elif defined(CONFIG_MACH_T0_USA_USCC)
+unsigned int Firmware_version_of_file = 0x1004;
+unsigned char *firmware_name = "epen/W9001_B746USC.bin";
+
+char Firmware_checksum[] = { 0x1F, 0x85, 0x70, 0x07, 0xF9, };
 
 /*CHN*/
 #elif defined(CONFIG_MACH_T0_CHN_CTC)
@@ -87,15 +93,22 @@ char Firmware_checksum[] = { 0x1F, 0x78, 0xB1, 0xAB, 0x78, };
 const char B713X_checksum[] = { 0x1F, 0xB5, 0x84, 0x38, 0x34, };
 /*checksum for 0x16*/
 const char B660X_checksum[] = { 0x1F, 0x83, 0x88, 0xD4, 0x67, };
+#elif defined(CONFIG_MACH_KONA)
+const unsigned int Binary_nLength = 0xCD6A;
+const unsigned char Mpu_type = 0x00;
+unsigned int Firmware_version_of_file = 0x65D;
+unsigned char *firmware_name = "epen/W9002_B781.bin";
+
+char Firmware_checksum[] = { 0x1F, 0x72, 0xCD, 0x6E, 0xE3, };
 #endif
 
 void wacom_i2c_set_firm_data(unsigned char *Binary_new)
 {
 	if (Binary_new == NULL) {
-#if defined(CONFIG_MACH_P4NOTE)
+#if defined(CONFIG_MACH_P4NOTE) || defined(CONFIG_MACH_SP7160LTE)
 		Binary = (unsigned char *)Binary_48;
 		ums_binary = false;
-#elif defined(CONFIG_MACH_Q1_BD) || defined(CONFIG_MACH_T0)
+#else
 		Binary = NULL;
 #endif
 		return;
@@ -120,7 +133,7 @@ int wacom_i2c_get_digitizer_type(void)
 
 void wacom_i2c_init_firm_data(void)
 {
-#if defined(CONFIG_MACH_P4NOTE)
+#if defined(CONFIG_MACH_P4NOTE) || defined(CONFIG_MACH_SP7160LTE)
 	Binary = (unsigned char *)Binary_48;
 
 #elif defined(CONFIG_MACH_Q1_BD)
@@ -130,10 +143,10 @@ void wacom_i2c_init_firm_data(void)
 		firmware_name = "epen/W8501_P48.bin";
 		Firmware_version_of_file = 0x20A;
 		printk(KERN_DEBUG
-		       "[E-PEN] Wacom driver is working for 4.8mm pitch pad.\n");
+		       "epen:Wacom driver is working for 4.8mm pitch pad.\n");
 	} else
 		printk(KERN_DEBUG
-		       "[E-PEN] Wacom driver is working for 4.4mm pitch pad.\n");
+		       "epen:Wacom driver is working for 4.4mm pitch pad.\n");
 #elif defined(CONFIG_MACH_T0)
 	int type;
 	int i;
@@ -142,17 +155,17 @@ void wacom_i2c_init_firm_data(void)
 
 	if (type == EPEN_DTYPE_B746) {
 		printk(KERN_DEBUG
-			"[E-PEN] Digitizer type is B746\n");
+			"epen:Digitizer type is B746\n");
 	} else if (type == EPEN_DTYPE_B713) {
 		printk(KERN_DEBUG
-			"[E-PEN] Digitizer type is B713\n");
+			"epen:Digitizer type is B713\n");
 		firmware_name = "epen/W9001_B713.bin";
 		Firmware_version_of_file = 0x13D;
 		memcpy(Firmware_checksum, B713X_checksum,
 			sizeof(Firmware_checksum));
 	} else {
 		printk(KERN_DEBUG
-			"[E-PEN] Digitizer type is B660\n");
+			"epen:Digitizer type is B660\n");
 		firmware_name = "epen/W9001_B660.bin";
 		Firmware_version_of_file = 0x16;
 		memcpy(Firmware_checksum, B660X_checksum,

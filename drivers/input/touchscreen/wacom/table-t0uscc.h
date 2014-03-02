@@ -17,6 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _LINUX_WACOM_I2C_TABLE_T0USCC_H
+#define _LINUX_WACOM_I2C_TABLE_T0USCC_H
+
 short TblX_CCW_LLeft_44[] = {
 #include "table/t0uscc/wacom_i2c_tblX_CCW_LLeft_T0.h"
 };
@@ -49,10 +52,11 @@ short TblY_PRight_44[] = {
 /* 0: Left, 1: Right */
 /* 0: Portrait 0, 1: Landscape 90, 2: Portrait 180 3: Landscape 270*/
 short tilt_offsetX[MAX_HAND][MAX_ROTATION] = \
-	{{-10, -30, 20, 30, }, {30, -10, -30, 20, } };
+	{{0, -30, 20, 20, }, {20, 0, -30, 20, } };
 short tilt_offsetY[MAX_HAND][MAX_ROTATION] = \
-	{{40, 0, -40, 20, }, {20, 40, 0, -40, }};
+	{{0, 0, -40, 20, }, {20, 0, 0, -40, }};
 
-char* tuning_version = "0925";
+char* tuning_version = "1109";
 char *tuning_model = "R950";
 
+#endif /* _LINUX_WACOM_I2C_TABLE_T0USCC_H */

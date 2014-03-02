@@ -20,9 +20,3 @@ menuconfig FM_SI4709
 	default n
 	help
 	  Say Y to enable Si4705 FM radio support.
-
-menuconfig J4FS
-	tristate "Samsung J4FS support"
-	default m
-	help
-	  Say Y to enable Samsung J4FS support.

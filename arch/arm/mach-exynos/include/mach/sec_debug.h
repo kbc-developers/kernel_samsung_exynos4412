@@ -3,6 +3,17 @@
 
 #include <linux/sched.h>
 #include <linux/semaphore.h>
+#include <linux/input.h>
+
+#ifdef CONFIG_SEC_DEBUG
+
+#define SEC_DEBUG_NAME		"sec_debug"
+
+#define SET_DEBUG_KEY(_key, _state) 	\
+{	\
+	.code = _key,	\
+	.state = _state,	\
+}
 
 union sec_debug_level_t {
 	struct {
@@ -12,9 +23,26 @@ union sec_debug_level_t {
 	u32 uint_val;
 };
 
+struct input_debug_key_state {
+	bool state;
+	u32 code;
+};
+
+struct input_debug_pdata {
+	struct input_debug_key_state *key_state;
+	int nkeys;
+};
+
+struct input_debug_drv_data {
+	struct input_handler input_handler;
+	struct input_debug_pdata *pdata;
+	struct input_device_id input_ids[2];
+	int crash_key_cnt;
+	kernel_ulong_t keybit[INPUT_DEVICE_ID_KEY_MAX / BITS_PER_LONG + 1];
+};
+
 extern union sec_debug_level_t sec_debug_level;
 
-#ifdef CONFIG_SEC_DEBUG
 extern int sec_debug_init(void);
 
 extern int sec_debug_magic_init(void);
@@ -194,6 +222,7 @@ static inline void debug_rwsemaphore_up_log(struct rw_semaphore *sem)
 
 enum sec_debug_aux_log_idx {
 	SEC_DEBUG_AUXLOG_CPU_BUS_CLOCK_CHANGE,
+	SEC_DEBUG_AUXLOG_CMA_RBTREE_CHANGE,
 	SEC_DEBUG_AUXLOG_ITEM_MAX,
 };
 
@@ -201,6 +230,10 @@ enum sec_debug_aux_log_idx {
 extern void sec_debug_aux_log(int idx, char *fmt, ...);
 #else
 #define sec_debug_aux_log(idx, ...) do { } while (0)
+#endif
+
+#ifdef CONFIG_SEC_AVC_LOG
+extern void sec_debug_avc_log(char *fmt, ...);
 #endif
 
 #if defined(CONFIG_MACH_Q1_BD)

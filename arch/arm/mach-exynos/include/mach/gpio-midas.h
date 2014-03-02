@@ -54,6 +54,24 @@
 #include "gpio-rev00-t0.h"
 #elif defined(CONFIG_MACH_BAFFIN)
 #include "gpio-rev00-baffin.h"
+#elif defined(CONFIG_MACH_TAB3)
+#include "gpio-rev00-tab3.h"
+#elif defined(CONFIG_MACH_HD)
+#include "gpio-rev00-hd.h"
+#elif defined(CONFIG_MACH_GD2)
+#include "gpio-rev01-gd2.h"
+#elif defined(CONFIG_MACH_ZEST)
+#include "gpio-rev00-zest.h"
+#elif defined(CONFIG_MACH_SP7160LTE)
+#include "gpio-rev00-sp7160lte.h"
+#elif defined(CONFIG_MACH_IPCAM)
+#include "gpio-rev00-ipcam.h"
+#elif defined(CONFIG_MACH_GC2PD)
+#include "gpio-rev00-gc2pd.h"
+#elif defined(CONFIG_MACH_WATCH) && defined(CONFIG_WATCH_00_BD)
+#include "gpio-rev00-watch.h"
+#elif defined(CONFIG_MACH_WATCH)
+#include "gpio-rev01-watch.h"
 #endif
 
 #endif /* __ASM_ARCH_GPIO_MIDAS_H */

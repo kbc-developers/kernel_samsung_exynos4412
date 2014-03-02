@@ -1,7 +1,5 @@
 menu "Device Drivers"
 
-source "drivers/gpu/mali400/Kconfig"
-
 source "drivers/base/Kconfig"
 
 source "drivers/connector/Kconfig"
@@ -154,10 +152,12 @@ source "drivers/extcon/Kconfig"
 
 source "drivers/barcode_emul/Kconfig"
 
-source "drivers/dpram/Kconfig"
+# MUIC
+source "drivers/muic/Kconfig"
 
 # Secure OS Mobicore
 source "drivers/gud/Kconfig"
+source "drivers/gud20/Kconfig"
 
 source "drivers/iommu/Kconfig"
 
@@ -166,5 +166,7 @@ source "drivers/felica/Kconfig"
 
 # Authentec
 source "drivers/interceptor/Kconfig"
+
+source "drivers/ice4_fpga/Kconfig"
 
 endmenu
