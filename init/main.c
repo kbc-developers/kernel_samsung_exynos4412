@@ -80,12 +80,6 @@
 #include <asm/smp.h>
 #endif
 
-#if defined (CONFIG_MACH_U1_NA_SPR)
-#ifdef CONFIG_SEC_DEBUG
-#include <linux/kernel_sec_common.h>
-#endif
-#endif
-
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
@@ -334,7 +328,7 @@ static inline void smp_prepare_cpus(unsigned int maxcpus) { }
  */
 static void __init setup_command_line(char *command_line)
 {
-	saved_command_line = alloc_bootmem(strlen (boot_command_line)+1+50);
+	saved_command_line = alloc_bootmem(strlen (boot_command_line)+1);
 	static_command_line = alloc_bootmem(strlen (command_line)+1);
 	strcpy (saved_command_line, boot_command_line);
 	strcpy (static_command_line, command_line);
@@ -628,11 +622,6 @@ asmlinkage void __init start_kernel(void)
 	sfi_init_late();
 
 	ftrace_init();
-#if defined (CONFIG_MACH_U1_NA_SPR)
-#ifdef CONFIG_SEC_DEBUG
-	kernel_sec_init();
-#endif
-#endif
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();

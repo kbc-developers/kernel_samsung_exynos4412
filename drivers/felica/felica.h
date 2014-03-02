@@ -33,7 +33,10 @@
 /******************************************************************************
  * log
  ******************************************************************************/
+
 /*#define FELICA_DEBUG*/
+
+
 
 
 
@@ -134,11 +137,9 @@ static void felica_nl_recv_msg(struct sk_buff *skb);
 static void felica_nl_wait_ret_msg(void);
 static void felica_set_felica_info(void);
 
-#ifndef CONFIG_FELICA_NO_SECURE
 static int felica_smc_read_oemflag(u32 ctrl_word, u32 *val);
 static int felica_Cpu0(void);
 static int felica_CpuAll(void);
-#endif
 static uint8_t felica_get_tamper_fuse_cmd(void);
 
 

@@ -17,6 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _LINUX_WACOM_I2C_COORD_TABLE_H
+#define _LINUX_WACOM_I2C_COORD_TABLE_H
 
 /*Tables*/
 #if defined(CONFIG_MACH_Q1_BD)
@@ -33,6 +35,8 @@
 #include "table-t0vzw.h"
 #elif defined(CONFIG_MACH_T0_USA_USCC)
 #include "table-t0uscc.h"
+#elif defined(CONFIG_MACH_T0_CHN_CTC)
+#include "table-t0chnctc.h"
 #else
 /*CONFIG_MACH_T0_EUR_OPEN*/
 #include "table-t03g.h"
@@ -64,3 +68,6 @@ short *tableX[MAX_HAND][MAX_ROTATION] = \
 short *tableY[MAX_HAND][MAX_ROTATION] = \
 	{{TblY_PLeft_44, TblY_CCW_LLeft_44, TblY_CW_LRight_44, TblY_PRight_44},
 	{TblY_PRight_44, TblY_PLeft_44, TblY_CCW_LLeft_44, TblY_CW_LRight_44} };
+
+#endif /* _LINUX_WACOM_I2C_COORD_TABLE_H */
+

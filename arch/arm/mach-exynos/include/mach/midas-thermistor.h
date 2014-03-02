@@ -47,7 +47,7 @@ struct adc_table_data {
 int convert_adc(int adc_data, int channel);
 #endif
 
-#ifdef CONFIG_STMPE811_ADC
+#if defined(CONFIG_STMPE811_ADC) && !defined(CONFIG_MACH_TAB3)
 extern struct stmpe811_platform_data stmpe811_pdata;
 #endif
 
