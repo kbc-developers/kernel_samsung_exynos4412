@@ -363,6 +363,14 @@ struct tsp_cmd tsp_cmds[] = {
 };
 #endif
 
+//--------------
+static int ma34_debug_probe_status;
+static int ma34_debug_fw_status;
+static int ma34_debug_fw_bin_sta[SECTION_NUM];
+static int ma34_debug_section_update_flag[SECTION_NUM];
+//--------------
+
+
 #if TOUCH_BOOSTER
 static void change_dvfs_lock(struct work_struct *work)
 {
@@ -871,10 +879,12 @@ static int mms100_seek_section_info(void)
 
 	for (i = 0; i < SECTION_NUM; i++) {
 		if (fw_mbin[i] == NULL) {
+			ma34_debug_fw_bin_sta[i] = 1;
 			buf = NULL;
 			pr_info("[TSP ISC] fw_mbin[%d]->data is NULL", i);
 		} else {
 			buf = fw_mbin[i]->data;
+			ma34_debug_fw_bin_sta[i] = 2;
 		}
 
 		if (buf == NULL) {
@@ -959,23 +969,29 @@ static eISCRet_t mms100_compare_version_info(struct i2c_client *_client)
 	int i, ret;
 	unsigned char expected_compatibility[SECTION_NUM];
 
+
 	if (mms100_get_version_info(_client) != ISC_SUCCESS)
 		return ISC_I2C_ERROR;
 
 	ret = mms100_seek_section_info();
 
+
 	/* Check update areas , 0 : bootloader 1: core 2: private 3: public */
 	for (i = 0; i < SECTION_NUM; i++) {
-		if ((mbin_info[i].version == 0) ||
-			(mbin_info[i].version != ts_info[i].version)) {
+//		if ((mbin_info[i].version == 0) ||
+//			(mbin_info[i].version != ts_info[i].version)) 
+		{
 			section_update_flag[i] = true;
+			ma34_debug_section_update_flag[i] = 1;
 			pr_info("[TSP ISC] [%d] section will be updated!", i);
 		}
 	}
+
 	section_update_flag[0] = false;
+	ma34_debug_section_update_flag[0] = 0;
 	pr_info("[TSP ISC] [%d] [%d] [%d]", section_update_flag[1],
 		section_update_flag[2], section_update_flag[3]);
-
+#if 0
 	if (section_update_flag[SEC_BOOTLOADER]) {
 		expected_compatibility[SEC_CORE] =
 		mbin_info[SEC_BOOTLOADER].version;
@@ -1012,6 +1028,7 @@ static eISCRet_t mms100_compare_version_info(struct i2c_client *_client)
 				return ISC_COMPATIVILITY_ERROR;
 		}
 	}
+#endif
 	return ISC_SUCCESS;
 }
 
@@ -1114,7 +1131,7 @@ static int mms100_ISC_clear_validate_markers(struct i2c_client *_client)
 	int ret_msg;
 	int i, j;
 	bool is_matched_address;
-
+#if 1
 	for (i = SEC_CORE; i <= SEC_PUBLIC_CONFIG; i++) {
 		if (section_update_flag[i]) {
 			if (ts_info[i].end_addr <= 30 &&
@@ -1127,7 +1144,7 @@ static int mms100_ISC_clear_validate_markers(struct i2c_client *_client)
 			}
 		}
 	}
-
+#endif
 	for (i = SEC_CORE; i <= SEC_PUBLIC_CONFIG; i++) {
 		if (section_update_flag[i]) {
 			is_matched_address = false;
@@ -1140,12 +1157,14 @@ static int mms100_ISC_clear_validate_markers(struct i2c_client *_client)
 			}
 
 			if (!is_matched_address) {
+				ma34_debug_section_update_flag[i] = 3;
 				if (mbin_info[i].end_addr <= 30 &&
 					mbin_info[i].end_addr > 0) {
 					ret_msg = mms100_ISC_clear_page(_client,
 						mbin_info[i].end_addr);
-
+				ma34_debug_section_update_flag[i] = 4;
 				if (ret_msg != ISC_SUCCESS)
+					ma34_debug_section_update_flag[i] = 5;
 					return ret_msg;
 				}
 			}
@@ -1252,6 +1271,7 @@ eISCRet_t mms100_ISC_download_mbinary(struct mms_ts_info *info)
 	struct i2c_client *_client = info->client;
 	eISCRet_t ret_msg = ISC_NONE;
 
+	ma34_debug_fw_status = 0;
 	pr_info("[TSP ISC] %s\n", __func__);
 
 	mms100_reset(info);
@@ -1264,28 +1284,39 @@ eISCRet_t mms100_ISC_download_mbinary(struct mms_ts_info *info)
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
 
+	ma34_debug_fw_status = 1;
 	/*Config version Check*/
 	ret_msg = mms100_compare_version_info(_client);
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
 
+	ma34_debug_fw_status = 2;
+#if 1
 	ret_msg = mms100_enter_ISC_mode(_client);
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
+
+	ma34_debug_fw_status = 3;
 
 	ret_msg = mms100_enter_config_update(_client);
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
 
+	ma34_debug_fw_status = 4;
+
 	ret_msg = mms100_ISC_clear_validate_markers(_client);
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
+
+	ma34_debug_fw_status = 5;
 
 	pr_info("[TSP ISC]mms100_update_section_data start");
 
 	ret_msg = mms100_update_section_data(_client);
 	if (ret_msg != ISC_SUCCESS)
 		goto ISC_ERROR_HANDLE;
+
+	ma34_debug_fw_status = 6;
 
 	pr_info("[TSP ISC]mms100_update_section_data end");
 
@@ -1294,7 +1325,7 @@ eISCRet_t mms100_ISC_download_mbinary(struct mms_ts_info *info)
 	pr_info("[TSP ISC]FIRMWARE_UPDATE_FINISHED!!!\n");
 
 	ret_msg = ISC_SUCCESS;
-
+#endif
 ISC_ERROR_HANDLE:
 	if (ret_msg != ISC_SUCCESS)
 		pr_info("[TSP ISC]ISC_ERROR_CODE: %d\n", ret_msg);
@@ -1850,10 +1881,22 @@ static int mms_ts_fw_info(struct mms_ts_info *info)
 
 	return ret;
 }
-
+#include "M0_D2_C1_VB5.h"
 static int mms_ts_fw_load(struct mms_ts_info *info)
 {
+#if 1
+	int ret = 0;
+	struct i2c_client *client = info->client;
+	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 
+	i2c_lock_adapter(adapter);
+	info->pdata->mux_fw_flash(true);
+
+	ret = fw_download(info, (const u8 *)MELFAS_binary,(const size_t)MELFAS_binary_nLength);
+
+	info->pdata->mux_fw_flash(false);
+	i2c_unlock_adapter(adapter);
+#else
 	struct i2c_client *client = info->client;
 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 	int ret = 0;
@@ -1868,7 +1911,7 @@ static int mms_ts_fw_load(struct mms_ts_info *info)
 	hw_rev = get_hw_version(info);
 	dev_info(&client->dev,
 		"[TSP]hw rev = 0x%02x\n", hw_rev);
-
+#if 0
 	pr_err("[TSP] ISC Ver [0x%02x] [0x%02x] [0x%02x]",
 		i2c_smbus_read_byte_data(info->client, 0xF3),
 		i2c_smbus_read_byte_data(info->client, 0xF4),
@@ -1888,7 +1931,7 @@ static int mms_ts_fw_load(struct mms_ts_info *info)
 				"4.8 fw version update does not need\n");
 		goto done;
 	}
-
+#endif
 	while (retries--) {
 		ret = mms100_ISC_download_mbinary(info);
 
@@ -1920,6 +1963,8 @@ done:
 #endif
 
 	ret = mms_ts_finish_config(info);
+#endif
+	
 	return ret;
 }
 
@@ -2937,8 +2982,14 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 	}
 #endif
 
+	ma34_debug_probe_status	= 1;
+
+
 	if (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
 		return -EIO;
+
+
+	ma34_debug_probe_status	= 2;
 
 	info = kzalloc(sizeof(struct mms_ts_info), GFP_KERNEL);
 	if (!info) {
@@ -2947,12 +2998,16 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 		goto err_alloc;
 	}
 
+	ma34_debug_probe_status	= 3;
+
 	input_dev = input_allocate_device();
 	if (!input_dev) {
 		dev_err(&client->dev, "Failed to allocate memory for input device\n");
 		ret = -ENOMEM;
 		goto err_input_alloc;
 	}
+
+	ma34_debug_probe_status	= 4;
 
 	info->client = client;
 	info->input_dev = input_dev;
@@ -2963,6 +3018,8 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 	}
 	info->irq = -1;
 	mutex_init(&info->lock);
+
+	ma34_debug_probe_status	= 5;
 
 	if (info->pdata) {
 		info->max_x = info->pdata->max_x;
@@ -3010,6 +3067,8 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 		goto err_reg_input_dev;
 	}
 
+	ma34_debug_probe_status	= 6;
+
 #if TOUCH_BOOSTER
 	mutex_init(&info->dvfs_lock);
 	INIT_DELAYED_WORK(&info->work_dvfs_off, set_dvfs_off);
@@ -3030,6 +3089,8 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 		goto err_config;
 	}
 
+	ma34_debug_probe_status	= 7;
+
 	ret = mms_ts_fw_load(info);
 /*	ret = mms_ts_fw_info(info); */
 
@@ -3037,7 +3098,8 @@ static int __devinit mms_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "failed to initialize (%d)\n", ret);
 		goto err_config;
 	}
-
+	ma34_debug_probe_status	= 8;
+	
 	info->enabled = true;
 	info->callbacks.inform_charger = melfas_ta_cb;
 	if (info->register_cb)
@@ -3207,9 +3269,85 @@ static struct i2c_driver mms_ts_driver = {
 		   },
 	.id_table = mms_ts_id,
 };
+//========================================================================
+#include <linux/proc_fs.h>
+static int
+proc_read( char* page, char** start, off_t offset, int count, int* eof, void* data )
+{
+	int len = 0;
+	int i;
+//	*eof = 1;
+	len += sprintf( page, "probe_status = %d,fw_status=%d\n", ma34_debug_probe_status,ma34_debug_fw_status );
+
+
+
+	len += sprintf( &page[len], "=======ma34_debug_fw_bin_sta===\n");
+	for (i = 0; i < SECTION_NUM; i++) {
+		len += sprintf( &page[len], " %d Stauts: 0x%02X ,update_flag: 0x%02X\n",i, ma34_debug_fw_bin_sta[i],ma34_debug_section_update_flag[i]);
+	}
+	len += sprintf( &page[len], "=============================\n");
+	for (i = 0; i < SECTION_NUM; i++) {
+		len += sprintf( &page[len], " ts_info(%d) version: 0x%02X\n",
+			i, ts_info[i].version);
+		len += sprintf( &page[len], " ts_info(%d) Start Address: 0x%02X\n",
+			i, ts_info[i].start_addr);
+		len += sprintf( &page[len], " ts_info(%d) End Address: 0x%02X\n",
+			i, ts_info[i].end_addr);
+		len += sprintf( &page[len], " ts_info(%d) Compatibility: 0x%02X\n",
+			i, ts_info[i].compatible_version);
+	}
+	len += sprintf( &page[len], "=============================\n");
+	for (i = 0; i < SECTION_NUM; i++) {
+		len += sprintf( &page[len], " mbin_info(%d) version: 0x%02X\n",
+			i, mbin_info[i].version);
+		len += sprintf( &page[len], " mbin_info(%d) Start Address: 0x%02X\n",
+			i, mbin_info[i].start_addr);
+		len += sprintf( &page[len], " mbin_info(%d) End Address: 0x%02X\n",
+			i, mbin_info[i].end_addr);
+		len += sprintf( &page[len], " mbin_info(%d) Compatibility: 0x%02X\n",
+			i, mbin_info[i].compatible_version);
+	}	
+	return len;
+}
+static int
+proc_write( struct file* filp, const char* buffer, unsigned long count, void* data )
+{
+	int copy_len = 0;
+	return copy_len;
+}
+
+
+static int debug_proc_init(void)
+{
+	struct proc_dir_entry* entry;
+	entry = create_proc_entry( "mms_ts", 
+		       S_IFREG | S_IRUGO | S_IWUGO, NULL );
+	ma34_debug_probe_status	= 0;
+	if ( entry != NULL ) {
+		entry->read_proc  = proc_read;
+		entry->write_proc = proc_write;
+	}
+	else {
+		printk( KERN_INFO "%s : create_proc_entry failed\n", "mms_ts_init" );
+		return -EBUSY;
+	}
+	//-- Data Init
+	ma34_debug_probe_status	= 0;
+	ma34_debug_fw_status	= 0;
+	{
+		int i;
+		for (i = 0; i < SECTION_NUM; i++) {
+			ma34_debug_fw_bin_sta[i] = 0;
+			ma34_debug_section_update_flag[0] = 0;
+		}
+	}
+	//---------------------------------------------------------------
+}
+//========================================================================
 
 static int __init mms_ts_init(void)
 {
+	debug_proc_init();
 
 	return i2c_add_driver(&mms_ts_driver);
 
