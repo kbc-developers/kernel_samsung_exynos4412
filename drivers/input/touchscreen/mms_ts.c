@@ -140,6 +140,8 @@ static struct device *bus_dev;
 
 int touch_is_pressed = 0;
 
+
+
 #define ISC_DL_MODE	1
 
 /* 4.8" OCTA LCD */
@@ -1881,22 +1883,10 @@ static int mms_ts_fw_info(struct mms_ts_info *info)
 
 	return ret;
 }
-#include "M0_D2_C1_VB5.h"
+
 static int mms_ts_fw_load(struct mms_ts_info *info)
 {
-#if 1
-	int ret = 0;
-	struct i2c_client *client = info->client;
-	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 
-	i2c_lock_adapter(adapter);
-	info->pdata->mux_fw_flash(true);
-
-	ret = fw_download(info, (const u8 *)MELFAS_binary,(const size_t)MELFAS_binary_nLength);
-
-	info->pdata->mux_fw_flash(false);
-	i2c_unlock_adapter(adapter);
-#else
 	struct i2c_client *client = info->client;
 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 	int ret = 0;
@@ -1963,8 +1953,6 @@ done:
 #endif
 
 	ret = mms_ts_finish_config(info);
-#endif
-	
 	return ret;
 }
 
