@@ -22,7 +22,7 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 
-#include <linux/platform_data/modem.h>
+#include "modem.h"
 #include "modem_prj.h"
 
 static int xmm6260_on(struct modem_ctl *mc)

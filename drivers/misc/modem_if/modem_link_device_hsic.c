@@ -31,7 +31,7 @@
 #include <linux/suspend.h>
 #include <linux/version.h>
 
-#include <linux/platform_data/modem.h>
+#include "modem.h"
 #include "modem_prj.h"
 #include "modem_link_device_hsic.h"
 #include "modem_utils.h"
